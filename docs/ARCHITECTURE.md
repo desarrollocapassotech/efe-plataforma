@@ -795,11 +795,13 @@ Prefijo `/api/v1`. Todos privados salvo indicación.
 | GET/POST | `/tarjetas` | |
 | PATCH/DELETE | `/tarjetas/:id` | Cambio de cierre → recálculo de períodos |
 | PUT | `/tarjetas/:id/cierres/:periodo` | Override de fechas de un resumen |
+| DELETE | `/tarjetas/:id/cierres/:periodo` | Vuelve a las fechas calculadas |
 | GET/POST | `/tarjetas/compras` | `?tarjetaId&desde&hasta` |
 | PATCH/DELETE | `/tarjetas/compras/:id` | Regenera cuotas |
 | GET | `/tarjetas/resumen` | `?tarjetaId&periodo` → cuotas del resumen, total por moneda, fechas |
 | GET | `/tarjetas/compromisos` | `?meses=12` → total comprometido por período y tarjeta |
-| GET/POST | `/tarjetas/pagos` | Pagos de resumen |
+| GET/POST | `/tarjetas/pagos` | Pagos de resumen (`?tarjetaId&periodo`) |
+| DELETE | `/tarjetas/pagos/:id` | |
 | GET/POST | `/objetivos` | Con acumulado, avance y aporte sugerido |
 | PATCH/DELETE | `/objetivos/:id` | |
 | POST | `/objetivos/:id/aportes` | |

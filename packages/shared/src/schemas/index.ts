@@ -5,4 +5,5 @@ export * from './movimientos';
 export * from './paginacion';
 export * from './recurrencias';
 export * from './resumen';
+export * from './tarjetas';
 export * from './usuarios';

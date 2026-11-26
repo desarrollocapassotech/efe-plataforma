@@ -17,6 +17,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
 import { MovimientosModule } from './modules/movimientos/movimientos.module';
 import { RecurrenciasModule } from './modules/recurrencias/recurrencias.module';
 import { ResumenModule } from './modules/resumen/resumen.module';
+import { TarjetasModule } from './modules/tarjetas/tarjetas.module';
 import { TransferenciasModule } from './modules/transferencias/transferencias.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -57,6 +58,7 @@ import { PrismaModule } from './prisma/prisma.module';
     TransferenciasModule,
     RecurrenciasModule,
     ResumenModule,
+    TarjetasModule,
     JobsModule,
   ],
   providers: [

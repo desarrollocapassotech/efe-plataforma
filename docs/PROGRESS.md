@@ -34,7 +34,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 ## Fase 3 — Tarjetas de crédito (Módulo 2)
 
 - [x] 3.1 Cálculos de tarjeta en `shared`
-- [ ] 3.2 Tarjetas, compras y pagos (API)
+- [x] 3.2 Tarjetas, compras y pagos (API)
 - [ ] 3.3 Web: tarjetas
 
 ## Fase 4 — Objetivos financieros (Módulo 3)
@@ -304,3 +304,17 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Caso límite documentado en el código: si cierre y vencimiento están a 1–2 días al final del mes (ej. 28 y 29), el clamp de febrero puede hacer que dos cierres venzan el mismo mes. No pasa con tarjetas reales (el vencimiento es ~10 días después del cierre); `resumenDelPeriodo` tiene un fallback para que siempre devuelva algo.
 - Valida días 1..31 enteros, fechas `YYYY-MM-DD` reales y cantidad de cuotas entera ≥ 1 (la de `dividirEnCuotas`).
 - Tests (33): mismo día del cierre / día siguiente, cruce de año, vencimiento el mismo mes o el siguiente, vencimiento igual al cierre, cierre 31 en febrero (común y bisiesto) y en meses de 30, overrides que adelantan, atrasan y de otro período, `resumenDelPeriodo`, `proximoResumen` (incluido "vence hoy"), 1/3/18 cuotas con suma exacta, centavos (0,05 en 3), cuotas con override, entradas inválidas. Total shared: 131.
+
+### 3.2 Tarjetas, compras y pagos (API)
+
+- Módulo `tarjetas` con tres controllers (todos con `@RequiresFeature('tarjetas')`): `TarjetasController` (`/tarjetas`), `ComprasController` (`/tarjetas/compras`) y `PagosController` (`/tarjetas/pagos`). Schemas en `@efe/shared/schemas/tarjetas.ts` (con tests).
+- **Tarjetas**: `GET` (`?incluirArchivadas`), `POST`, `PATCH /:id`, `DELETE /:id`. Días 1..31, `ultimos4` de exactamente 4 números, color `#RRGGBB`. Cada tarjeta viene con su **`proximoResumen`** (período y fechas del primero que vence hoy o después) y sus `saldos` por moneda (`total`, `pagado`, `pendiente`): lo que necesita el listado de 3.3. `DELETE` con compras o pagos → 409 `TARJETA_CON_COMPRAS` (archivar). Tarjeta archivada → 422 `TARJETA_ARCHIVADA` al cargarle compras (pagar un resumen de una archivada sí se puede).
+- **Overrides**: `PUT /tarjetas/:id/cierres/:periodo` `{ fechaCierre, fechaVencimiento }` (el vencimiento tiene que ser posterior al cierre y caer en el mes del período → 422 `CIERRE_INVALIDO`). **Agregado**: `DELETE /tarjetas/:id/cierres/:periodo` para volver a las fechas calculadas (la pantalla de 3.3 permite deshacer una corrección).
+- **Recálculo** (`recalcularPeriodos`, en la misma transacción): al guardar/borrar un override se recalculan las cuotas con período ≥ ese período; al cambiar `diaCierre`/`diaVencimiento`, desde **el próximo resumen a pagar con el calendario anterior** (los resúmenes ya vencidos no se tocan). Usa `generarCuotas` de shared y solo actualiza las cuotas que cambian.
+- **Compras**: `GET` (paginado por cursor, `?tarjetaId&desde&hasta`), `POST`, `PATCH /:id` (regenera todas las cuotas), `DELETE /:id` (cuotas en cascada). Categoría solo de gastos y no archivada. Moneda ARS o USD por compra (una tarjeta puede tener las dos). Hasta 72 cuotas.
+- **`GET /tarjetas/resumen?tarjetaId&periodo`** → **una lista** con un resumen por tarjeta (todas las activas si no se pasa `tarjetaId`; sin `periodo`, el próximo a vencer **de cada tarjeta**, que puede ser distinto entre tarjetas): fechas, `fechasManuales`, cuotas (descripción, n/total, categoría), `saldos` por moneda y pagos.
+- **`GET /tarjetas/compromisos?meses=12`** → desde el mes actual, cada período con `totales` por moneda y `porTarjeta`. Suma las cuotas (no descuenta pagos parciales del período en curso: es "lo comprometido", el detalle de lo pagado está en el resumen).
+- **Pagos**: `GET` (`?tarjetaId&periodo`), `POST`, `DELETE /:id`. La cuenta tiene que ser propia, activa y de la moneda del pago (422 `CUENTA_MONEDA_DISTINTA`). Verificado en el e2e: el pago descuenta del saldo de la cuenta y `/resumen/mensual` cuenta las cuotas pero no el pago.
+- Agregados en SQL: saldos y compromisos con `groupBy` (cuotas por tarjeta × período × moneda, pagos igual). El detalle del resumen sí trae las cuotas (se muestran una por una).
+- e2e `tarjetas.e2e-spec.ts` (10 tests): validaciones, compra en 3 cuotas en 3 resúmenes, cambio de cierre que mueve cuotas y vuelve, override que mueve cuotas y al borrarlo vuelven, edición de compra que regenera cuotas, paginación, pagos (moneda, saldo de cuenta, resumen mensual, borrar), próximo a vencer, compromisos, archivar/borrar, **aislamiento** entre dos usuarios. Suite completa contra Postgres 16 local: 71 tests verdes.
+- Sin migraciones: los modelos ya estaban en el schema.
