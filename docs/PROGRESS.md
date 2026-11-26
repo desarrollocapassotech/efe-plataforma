@@ -25,7 +25,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 - [x] 2.1 Cuentas y categorías (API)
 - [x] 2.2 Movimientos y transferencias (API)
-- [ ] 2.3 Recurrencias + job
+- [x] 2.3 Recurrencias + job
 - [ ] 2.4 Resumen mensual y evolución (API)
 - [ ] 2.5 Web: onboarding, cuentas y categorías
 - [ ] 2.6 Web: movimientos y carga rápida
@@ -216,3 +216,18 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - `exigirCuentaActiva` vive en el módulo de cuentas y lo usan movimientos y transferencias.
 - e2e: movimientos (11 tests: 120 movimientos recorridos en páginas de 50/50/20 sin repetir ni saltear y en orden, cursor con item borrado, cada filtro y combinados, validaciones, recurrencia desvinculada, aislamiento) y transferencias (6 tests: ARS→USD con cotización y saldos, reglas de monto de destino, PATCH con cambio de moneda, aislamiento, paginación y filtro por cuenta).
 - Arreglo de infraestructura: ESLint ignora los temporales que crean tsup/vite al cargar su config (`*.bundled_*.mjs`); con lint y build en paralelo hacían fallar el lint de forma intermitente.
+
+### 2.3 Recurrencias + job
+
+- Cálculo en `@efe/shared/recurrencias` (subpath nuevo): `ocurrenciasRecurrencia(regla, limite, despuesDePeriodo)` y `proximaOcurrencia(regla, desdeFecha, despuesDePeriodo)`, con `fechaConDia` para el clamp (31 → último día). 16 tests: meses cortos, bisiestos, desde a mitad de mes, hasta, cruce de año, anual (incluido 29/2) y último generado.
+- **Cambio de schema**: `Recurrencia.ultimoPeriodoGenerado String?` (migración `recurrencia_ultimo_periodo`, aplicada en `develop` y `test`). Motivo: deducir "lo último generado" de los movimientos falla si el usuario borra uno o lo edita (se desvincula, regla de 2.2): el job lo volvería a crear o lo duplicaría. La columna solo avanza. ARCHITECTURE §5.1 y §5.2 actualizados.
+- CRUD `/recurrencias` (`?incluirInactivas`), con las mismas validaciones que movimientos (cuenta activa y propia, categoría del mismo tipo y no archivada, moneda de la cuenta). La respuesta trae `proximaFecha`.
+  - Al crear se genera en el momento lo que corresponde hasta hoy.
+  - `PATCH` valida la regla resultante (anual con mes, `hasta >= desde`) → 422 `RECURRENCIA_INVALIDA`; volver a mensual limpia el mes. Los cambios rigen hacia adelante.
+  - **Reactivar no recupera los meses en que estuvo inactiva**: lo que habría tocado hasta ayer se da por procesado. Decisión para no cargar de golpe meses atrasados; revisar con Flor si se prefiere lo contrario.
+  - Borrar la recurrencia deja los movimientos generados (`recurrenciaId` → null).
+- Job: `POST /internal/jobs/:job` (`@Public`, sin throttle), protegido por `X-Jobs-Secret` comparado en tiempo constante (sha256 + `timingSafeEqual`). Sin `JOBS_SECRET` configurado rechaza todo. Job desconocido → 404 `JOB_DESCONOCIDO`. Job `recurrencias`: `materializarTodas(hoy)` (hoy en Argentina), una transacción por recurrencia, `createMany` con `skipDuplicates`; si una falla se loguea y sigue. Respuesta `{ job, duracionMs, recurrencias, generados, errores }`; loguea inicio, fin y duración.
+- La regla "categoría válida para el tipo" pasó al módulo de categorías (`exigirCategoriaValida`), la usan movimientos y recurrencias.
+- `apps/api/.env` local tiene un `JOBS_SECRET` aleatorio para probar el job (`curl -X POST -H "X-Jobs-Secret: ..." localhost:3000/api/v1/internal/jobs/recurrencias`).
+- Tests: unit del guard del secreto (3) y e2e (10): generación al crear sin fechas futuras, validaciones, 401 sin secreto o con token de usuario, idempotencia (job dos veces), borrar/editar un generado no lo recrea, desactivar y reactivar sin recuperar atrasados, anual, borrar la recurrencia conserva los movimientos, PATCH, aislamiento.
+- El cron que llama al job es el paso 8.3 (`jobs.yml`).

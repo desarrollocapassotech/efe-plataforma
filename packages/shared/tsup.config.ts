@@ -8,6 +8,7 @@ export default defineConfig({
     'dinero/index': 'src/dinero/index.ts',
     'fechas/index': 'src/fechas/index.ts',
     'features/index': 'src/features/index.ts',
+    'recurrencias/index': 'src/recurrencias/index.ts',
     'schemas/index': 'src/schemas/index.ts',
   },
   format: ['esm', 'cjs'],

@@ -215,7 +215,7 @@ export const FEATURES_POR_PLAN: Record<Plan, Feature[]> = {
 | Cuentas | Reemplazan a los "projects/cuentas" de `gastos`. Tienen saldo inicial. |
 | Categorías | Por usuario, sembradas al registrarse desde una plantilla. Separadas por tipo (gasto/ingreso). Se archivan, no se borran si tienen movimientos. |
 | Ingresos recurrentes vs extraordinarios | Recurrente = generado por una `Recurrencia`. Extraordinario = ingreso cargado a mano. No hace falta un flag. |
-| Recurrencias | Se materializan en `Movimiento` con un job diario idempotente (`@@unique([recurrenciaId, periodoRecurrencia])`). |
+| Recurrencias | Se materializan en `Movimiento` con un job diario idempotente (`@@unique([recurrenciaId, periodoRecurrencia])`). `Recurrencia.ultimoPeriodoGenerado` guarda el último período procesado y solo avanza: si el usuario borra o edita (desvincula) un movimiento generado, no se vuelve a crear. Solo se generan fechas <= hoy (Argentina). Al reactivar una recurrencia no se recuperan los períodos en que estuvo inactiva. Cálculo de fechas en `@efe/shared/recurrencias`. |
 | Transferencias | Entidad propia, **no** cuentan como ingreso ni gasto. Permiten moneda distinta en origen y destino (compra de dólares). |
 | Compras con tarjeta | `CompraTarjeta` + N `Cuota`. Cada cuota tiene su `periodoResumen`. |
 | Período de resumen | `YYYY-MM` del **mes de vencimiento** del resumen (el mes en que se paga). |
@@ -442,6 +442,7 @@ model Recurrencia {
   desde         DateTime       @db.Date
   hasta         DateTime?      @db.Date
   activa        Boolean        @default(true)
+  ultimoPeriodoGenerado String? // YYYY-MM del último período procesado por el job (agregado en el paso 2.3)
   creadoEn      DateTime       @default(now())
   actualizadoEn DateTime       @updatedAt
 

@@ -198,22 +198,25 @@ model Transferencia {
 }
 
 model Recurrencia {
-  id            String         @id @default(cuid())
-  usuarioId     String
-  cuentaId      String
-  categoriaId   String?
-  tipo          TipoMovimiento
-  monto         Decimal        @db.Decimal(18, 2)
-  moneda        Moneda
-  descripcion   String
-  frecuencia    Frecuencia     @default(MENSUAL)
-  diaDelMes     Int // 1..31, con clamp
-  mesDelAnio    Int? // solo ANUAL
-  desde         DateTime       @db.Date
-  hasta         DateTime?      @db.Date
-  activa        Boolean        @default(true)
-  creadoEn      DateTime       @default(now())
-  actualizadoEn DateTime       @updatedAt
+  id                    String         @id @default(cuid())
+  usuarioId             String
+  cuentaId              String
+  categoriaId           String?
+  tipo                  TipoMovimiento
+  monto                 Decimal        @db.Decimal(18, 2)
+  moneda                Moneda
+  descripcion           String
+  frecuencia            Frecuencia     @default(MENSUAL)
+  diaDelMes             Int // 1..31, con clamp
+  mesDelAnio            Int? // solo ANUAL
+  desde                 DateTime       @db.Date
+  hasta                 DateTime?      @db.Date
+  activa                Boolean        @default(true)
+  /// YYYY-MM del último período ya procesado por el job. Solo avanza: si el usuario borra o
+  /// edita (desvincula) un movimiento generado, no se vuelve a crear.
+  ultimoPeriodoGenerado String?
+  creadoEn              DateTime       @default(now())
+  actualizadoEn         DateTime       @updatedAt
 
   usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   cuenta      Cuenta       @relation(fields: [cuentaId], references: [id], onDelete: Restrict)

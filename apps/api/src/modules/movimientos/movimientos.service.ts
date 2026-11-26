@@ -6,9 +6,8 @@ import type {
   ListarMovimientosQuery,
   Movimiento,
   Pagina,
-  TipoMovimiento,
 } from '@efe/shared/schemas';
-import { type Categoria, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { noEncontrado, noProcesable } from '../../common/errors/errores';
 import { fechaADb, fechaDeDb } from '../../common/fechas';
 import {
@@ -18,7 +17,7 @@ import {
   ORDEN_CRONOLOGICO_DESC,
 } from '../../common/pagination/cursor';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CategoriasService } from '../categorias/categorias.service';
+import { CategoriasService, exigirCategoriaValida } from '../categorias/categorias.service';
 import { CuentasService, exigirCuentaActiva } from '../cuentas/cuentas.service';
 
 const INCLUIR = {
@@ -81,7 +80,7 @@ export class MovimientosService {
     const cuenta = await this.cuentas.obtenerPropia(usuarioId, datos.cuentaId);
     exigirCuentaActiva(cuenta);
     if (datos.categoriaId) {
-      this.validarCategoria(
+      exigirCategoriaValida(
         await this.categorias.obtenerPropia(usuarioId, datos.categoriaId),
         datos.tipo,
       );
@@ -132,7 +131,7 @@ export class MovimientosService {
     }
     if (datos.categoriaId !== undefined && datos.categoriaId !== actual.categoriaId) {
       if (datos.categoriaId) {
-        this.validarCategoria(
+        exigirCategoriaValida(
           await this.categorias.obtenerPropia(usuarioId, datos.categoriaId),
           actual.tipo,
         );
@@ -160,21 +159,5 @@ export class MovimientosService {
     const movimiento = await this.prisma.movimiento.findFirst({ where: { id, usuarioId } });
     if (!movimiento) throw noEncontrado('No encontramos el movimiento');
     return movimiento;
-  }
-
-  /** La categoría tiene que ser del mismo tipo que el movimiento y no estar archivada. */
-  private validarCategoria(categoria: Categoria, tipo: TipoMovimiento): void {
-    if (categoria.tipo !== tipo) {
-      throw noProcesable(
-        'CATEGORIA_TIPO_INVALIDO',
-        `"${categoria.nombre}" es una categoría de ${categoria.tipo === 'GASTO' ? 'gastos' : 'ingresos'}`,
-      );
-    }
-    if (categoria.archivada) {
-      throw noProcesable(
-        'CATEGORIA_ARCHIVADA',
-        `La categoría "${categoria.nombre}" está archivada`,
-      );
-    }
   }
 }

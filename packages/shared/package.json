@@ -49,6 +49,16 @@
         "default": "./dist/features/index.cjs"
       }
     },
+    "./recurrencias": {
+      "import": {
+        "types": "./dist/recurrencias/index.d.ts",
+        "default": "./dist/recurrencias/index.js"
+      },
+      "require": {
+        "types": "./dist/recurrencias/index.d.cts",
+        "default": "./dist/recurrencias/index.cjs"
+      }
+    },
     "./schemas": {
       "import": {
         "types": "./dist/schemas/index.d.ts",

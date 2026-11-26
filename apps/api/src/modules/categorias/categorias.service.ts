@@ -8,7 +8,7 @@ import type {
   TipoMovimiento,
 } from '@efe/shared/schemas';
 import { Prisma, type Categoria as CategoriaDb } from '@prisma/client';
-import { conflicto, noEncontrado } from '../../common/errors/errores';
+import { conflicto, noEncontrado, noProcesable } from '../../common/errors/errores';
 import { PrismaService } from '../../prisma/prisma.service';
 
 function aCategoria(c: CategoriaDb): Categoria {
@@ -25,6 +25,20 @@ function aCategoria(c: CategoriaDb): Categoria {
 }
 
 const duplicada = () => conflicto('CATEGORIA_DUPLICADA', 'Ya tenés una categoría con ese nombre');
+
+/** La categoría tiene que ser del mismo tipo que el movimiento (o recurrencia) y no estar archivada. */
+export function exigirCategoriaValida(categoria: CategoriaDb, tipo: TipoMovimiento): void {
+  if (categoria.tipo !== tipo) {
+    const de = categoria.tipo === 'GASTO' ? 'gastos' : 'ingresos';
+    throw noProcesable(
+      'CATEGORIA_TIPO_INVALIDO',
+      `"${categoria.nombre}" es una categoría de ${de}`,
+    );
+  }
+  if (categoria.archivada) {
+    throw noProcesable('CATEGORIA_ARCHIVADA', `La categoría "${categoria.nombre}" está archivada`);
+  }
+}
 
 @Injectable()
 export class CategoriasService {

@@ -13,7 +13,9 @@ import { ConfigService } from './config/config.service';
 import { CategoriasModule } from './modules/categorias/categorias.module';
 import { CuentasModule } from './modules/cuentas/cuentas.module';
 import { HealthModule } from './modules/health/health.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 import { MovimientosModule } from './modules/movimientos/movimientos.module';
+import { RecurrenciasModule } from './modules/recurrencias/recurrencias.module';
 import { TransferenciasModule } from './modules/transferencias/transferencias.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -52,6 +54,8 @@ import { PrismaModule } from './prisma/prisma.module';
     CategoriasModule,
     MovimientosModule,
     TransferenciasModule,
+    RecurrenciasModule,
+    JobsModule,
   ],
   providers: [
     // Orden: rate limit → autenticación → rol → feature del plan.
