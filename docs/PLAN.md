@@ -56,8 +56,7 @@ Si el repo fue público o compartido alguna vez: tratá las claves como comprome
 - Archivar `efecapital-portal-customer` (Settings → Archive).
 
 ### 0.3 Neon
-- Crear proyecto `efe-plataforma` (región más cercana disponible, ej. São Paulo).
-- Ramas: `main` (producción), `dev`, `test`.
+- Dos proyectos separados (ver `ARCHITECTURE.md` §10): `efe-plataforma` (producción, solo rama `production`, máx. 2 CU) y `efe-plataforma-desarrollo` (ramas `develop` y `test`, máx. 1 CU). Región São Paulo.
 - Guardar para cada rama: connection string **pooled** (`DATABASE_URL`) y **directa** (`DIRECT_URL`).
 
 ### 0.4 Firebase (`efecapitaladmin`)

@@ -6,7 +6,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 - [ ] 0.1 Seguridad del repo `gastos` (sacar keystores)
 - [ ] 0.2 GitHub (repo `desarrollocapassotech/efe-plataforma`, archivar `efecapital-portal-customer`)
-- [ ] 0.3 Neon (proyecto `efe-plataforma`, ramas `main`, `dev`, `test`)
+- [x] 0.3 Neon (`efe-plataforma` producción + `efe-plataforma-desarrollo` con `develop` y `test`)
 - [ ] 0.4 Firebase `efecapitaladmin` (Auth, service account, web app "EFE Web", sitios de Hosting)
 - [ ] 0.5 Otros (Render, Sentry, Docker Desktop)
 - [ ] 0.6 Con Flor: wireframes y decisiones 1–3 de `ARCHITECTURE.md` §11
@@ -15,7 +15,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 - [x] 1.1 Scaffold del monorepo
 - [x] 1.2 `packages/shared`: dinero, fechas y features
-- [ ] 1.3 Scaffold de la API
+- [x] 1.3 Scaffold de la API
 - [ ] 1.4 Schema Prisma del Lanzamiento 1 + seed
 - [ ] 1.5 Autenticación, roles y features
 - [ ] 1.6 Scaffold de la web
@@ -101,3 +101,31 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - zod 4 (compatible con `nestjs-zod` 5).
 - Tests en Vitest con `TZ=America/Sao_Paulo` para detectar dependencias de la zona horaria.
 - `pnpm-workspace.yaml` permite el script de instalación de `esbuild` (pnpm 10 los bloquea por defecto). Prisma se va a sumar en 1.3.
+
+### 0.3 Neon
+
+- Como en Vialto: producción y desarrollo en **proyectos separados** (la cuota de cómputo es por proyecto). Detalle en `ARCHITECTURE.md` §10.
+  - `efe-plataforma` (`plain-shadow-50025502`): solo rama `production`, compute limitado a 2 CU. Sus connection strings son para Render (paso 8.2); no están en ningún archivo del repo ni de la máquina.
+  - `efe-plataforma-desarrollo` (`rapid-recipe-19586937`): rama `develop` (en `apps/api/.env`) y rama `test` (en `apps/api/.env.test`), máx. 1 CU. Creado vía Neon MCP.
+- No se usó `neon init` / `neon deploy`: escriben `neon.ts` y un `.env.local` en la raíz, y la arquitectura define Prisma con `DATABASE_URL`/`DIRECT_URL` en `apps/api/.env`.
+
+### 1.3 Scaffold de la API
+
+- NestJS **11** (ya salió la 12, pero `nestjs-zod` 5 solo soporta hasta 11 y la arquitectura dice 11). Prisma 6.19.
+- Dependencias y para qué:
+  - `@nestjs/{common,core,platform-express}`: framework. `@nestjs/swagger`: docs en `/api/docs` (solo fuera de producción). `@nestjs/throttler`: rate limit (100/min por IP).
+  - `prisma` (en `dependencies`, porque Render corre `prisma migrate deploy` en el pre-deploy) + `@prisma/client`.
+  - `nestjs-zod` + `zod`: validación global con los schemas de `@efe/shared`.
+  - `nestjs-pino` + `pino` + `pino-http`: logs JSON con redacción de `Authorization`, cookies y `X-Jobs-Secret`. `pino-pretty` (dev) para leerlos en consola.
+  - `helmet`: headers de seguridad.
+  - Dev: `@nestjs/cli`, `@nestjs/testing`, `jest` + `ts-jest` (default de Nest), `supertest`.
+- **Sin `@nestjs/config` ni `dotenv`**: el `.env` se carga con `process.loadEnvFile` (nativo de Node 22) y se valida con zod (`src/config/env.ts`). `ConfigService` propio y tipado. Si falta algo, la API no arranca y lista qué falta, sin mostrar valores.
+- Firebase y `JOBS_SECRET` son opcionales hasta 1.5 / 2.3, pero **obligatorias si `NODE_ENV=production`**.
+- `Decimal` → string con un interceptor global: siempre al menos 2 decimales (`"1234.50"`), pero conserva la precisión de columnas con más decimales (indicadores, `Decimal(18, 6)`).
+- Errores: filtro global → `{ error: { code, message, details? } }`. Validación zod → 400 `VALIDACION` con los issues; P2002 → 409 `CONFLICTO`; P2025 → 404 `NO_ENCONTRADO`; 429 `DEMASIADAS_SOLICITUDES`; lo desconocido → 500 `ERROR_INTERNO` sin filtrar el mensaje interno.
+- `GET /api/v1/health` responde 503 si la base no responde (Render lo usa como health check). Marcarlo `@Public()` en 1.5.
+- `configurarApp()` es compartida entre `main.ts` y los e2e, para que los e2e prueben la misma configuración HTTP que producción.
+- `prisma generate` es una tarea de Turbo propia (`prisma:generate`) de la que dependen build, typecheck, test y dev: en Windows, dos `generate` en paralelo chocan con la DLL del motor bloqueada.
+- e2e (`pnpm --filter @efe/api test:e2e`) contra la rama `test` de Neon vía `.env.test`. `docker-compose.yml` queda como alternativa (Postgres 18, puerto 5433).
+- Tsconfig de la API: `NodeNext` (CommonJS + respeta `exports` de `@efe/shared`), decoradores, `isolatedModules: false`. ESLint de la API desactiva `consistent-type-imports`: un `import type` de una clase inyectada rompe la DI de Nest.
+- Ojo en esta máquina: la extensión **Console Ninja** de VS Code modifica `@nestjs/core` en `node_modules` y hace que Jest avise "A worker process has failed to exit gracefully". No es del código (no pasa en CI ni con una instalación limpia).

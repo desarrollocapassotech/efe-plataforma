@@ -1,0 +1,75 @@
+{
+  "name": "@efe/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API de la plataforma EFE (NestJS + Prisma)",
+  "scripts": {
+    "postinstall": "prisma generate",
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start:prod": "node dist/main",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:e2e": "jest --config test/jest-e2e.json --runInBand",
+    "prisma": "prisma",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@efe/shared": "workspace:*",
+    "@nestjs/common": "^11.2.12",
+    "@nestjs/core": "^11.2.12",
+    "@nestjs/platform-express": "^11.2.12",
+    "@nestjs/swagger": "^11.4.8",
+    "@nestjs/throttler": "^6.8.0",
+    "@prisma/client": "~6.19.3",
+    "helmet": "^8.3.0",
+    "nestjs-pino": "^5.3.2",
+    "nestjs-zod": "^5.6.0",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "prisma": "~6.19.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@efe/config": "workspace:*",
+    "@nestjs/cli": "^11.0.24",
+    "@nestjs/testing": "^11.2.12",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.20.7",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "jest": "^30.5.2",
+    "pino-pretty": "^13.2.0",
+    "supertest": "^7.3.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "~5.9.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "diagnostics": {
+            "ignoreCodes": [
+              151002
+            ]
+          }
+        }
+      ]
+    },
+    "testEnvironment": "node"
+  }
+}

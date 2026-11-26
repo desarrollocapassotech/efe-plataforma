@@ -868,9 +868,20 @@ Disparados por **GitHub Actions `schedule`** llamando a `POST /api/v1/internal/j
 
 | Entorno | API | DB | Web / Admin |
 |---|---|---|---|
-| Local | `pnpm dev` (puerto 3000) | Neon rama `dev` | Vite (5173 web, 5174 admin) |
-| Tests e2e | Jest | Postgres de Docker (`docker compose up db`) o Neon rama `test` | — |
-| Producción | Render (web service, plan Starter, sin dormirse) | Neon rama `main` | Firebase Hosting `efecapitaladmin`, sitios `efe-web` y `efe-admin` |
+| Local | `pnpm dev` (puerto 3000) | Neon `efe-plataforma-desarrollo`, rama `develop` | Vite (5173 web, 5174 admin) |
+| Tests e2e | Jest | Neon `efe-plataforma-desarrollo`, rama `test` (o Postgres de Docker: `docker compose up db`) | — |
+| Producción | Render (web service, plan Starter, sin dormirse) | Neon `efe-plataforma`, rama `production` | Firebase Hosting `efecapitaladmin`, sitios `efe-web` y `efe-admin` |
+
+**Neon: producción y desarrollo en proyectos separados** (mismo criterio que Vialto). La cuota de cómputo de Neon es por proyecto: si desarrollo vive como rama del proyecto de producción, puede agotarla y suspender producción (le pasó a Vialto en sep 2026). Por eso:
+
+| Proyecto Neon | ID | Ramas | Máx. compute |
+|---|---|---|---|
+| `efe-plataforma` (producción) | `plain-shadow-50025502` | solo `production` | 2 CU |
+| `efe-plataforma-desarrollo` | `rapid-recipe-19586937` | `develop` (local), `test` (e2e) | 1 CU |
+
+- No crear ramas de desarrollo ni de pruebas dentro de `efe-plataforma`.
+- Región `aws-sa-east-1` (São Paulo), Postgres 18.
+- Las migraciones se crean y prueban en `develop`; en producción solo se aplican con `prisma migrate deploy` (pre-deploy de Render). Nunca `migrate dev` ni `migrate reset` contra producción.
 
 ### Variables de entorno
 

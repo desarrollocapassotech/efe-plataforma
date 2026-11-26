@@ -5,3 +5,7 @@ packages:
 # pnpm 10 no corre scripts de instalación salvo los permitidos acá.
 onlyBuiltDependencies:
   - esbuild
+  - prisma
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@nestjs/core'

@@ -1,0 +1,21 @@
+{
+  "extends": "@efe/config/tsconfig/base.json",
+  "compilerOptions": {
+    // Nest compila a CommonJS. NodeNext respeta el campo "exports" de @efe/shared (condición "require").
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node", "jest"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    // emitDecoratorMetadata necesita ver los imports de clases como valores.
+    "isolatedModules": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+  "include": ["src"]
+}
