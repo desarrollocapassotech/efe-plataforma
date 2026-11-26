@@ -24,7 +24,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 ## Fase 2 — Finanzas personales (Módulo 1)
 
 - [x] 2.1 Cuentas y categorías (API)
-- [ ] 2.2 Movimientos y transferencias (API)
+- [x] 2.2 Movimientos y transferencias (API)
 - [ ] 2.3 Recurrencias + job
 - [ ] 2.4 Resumen mensual y evolución (API)
 - [ ] 2.5 Web: onboarding, cuentas y categorías
@@ -199,3 +199,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Recurso de otro usuario o inexistente → 404 `NO_ENCONTRADO` (helpers `noEncontrado` / `conflicto` en `common/errors/errores.ts`).
 - Agregado `GET /categorias?incluirArchivadas` (el plan solo pedía `?tipo`) para que la pantalla de gestión pueda mostrar y desarchivar.
 - e2e: `test/helpers.ts` (levantar la app, crear usuarios de prueba, borrarlos). Cuentas (7 tests) y categorías (8 tests): CRUD, validaciones, aislamiento entre dos usuarios, saldo con todos los tipos de operación (insertados con Prisma: movimientos, transferencias ARS→USD, pago de resumen y una compra en cuotas que no debe contar).
+
+### 2.2 Movimientos y transferencias (API)
+
+- Movimientos: `GET /movimientos` (filtros `desde`, `hasta`, `tipo`, `cuentaId`, `categoriaId`, `q` en la descripción sin distinguir mayúsculas; paginación por cursor), `POST`, `PATCH /:id`, `DELETE /:id`. Cada item trae `cuenta` y `categoria` resumidas.
+  - La moneda no se manda: es la de la cuenta.
+  - Categoría de otro tipo → 422 `CATEGORIA_TIPO_INVALIDO`. Agregado: categoría archivada → 422 `CATEGORIA_ARCHIVADA`; cuenta archivada → 422 `CUENTA_ARCHIVADA` (solo al crear o al mover a otra cuenta: editar un movimiento viejo de una cuenta archivada sí se puede).
+  - `PATCH` no deja cambiar el tipo. Cambiar a una cuenta de otra moneda → 422 `CUENTA_MONEDA_DISTINTA`.
+  - **Editar un movimiento generado por una recurrencia lo desvincula** (`recurrenciaId` y `periodoRecurrencia` a null), así el job de 2.3 no lo regenera ni pisa la edición.
+- Transferencias: `GET /transferencias` (filtros `desde`, `hasta`, `cuentaId` como origen o destino; paginado), `POST`, `PATCH /:id`, `DELETE /:id`.
+  - Misma moneda: sin `montoDestino` llega lo mismo que sale; si viene distinto → 422 `MONTO_DESTINO_INVALIDO`. Monedas distintas: `montoDestino` obligatorio → 422 `MONTO_DESTINO_REQUERIDO`.
+  - La respuesta trae `cotizacion` implícita (pesos por dólar, en cualquier sentido) calculada con `cotizacionImplicita` de `@efe/shared/dinero` (con tests). null si las monedas son iguales.
+  - `PATCH` revalida el resultado completo: si sigue siendo entre monedas distintas y no se manda `montoDestino`, conserva el anterior; si pasa a misma moneda, el destino vuelve a igualar al origen. Origen = destino → 422 `CUENTAS_IGUALES` (al crear es 400 de validación).
+- Paginación por cursor (`common/pagination/cursor.ts`): keyset sobre `fecha desc, creadoEn desc, id desc`. El cursor guarda esos tres valores (base64url), así sigue funcionando aunque se borre el último item de la página. Cursor inválido → 400 `CURSOR_INVALIDO`. Respuesta `{ items, nextCursor }` (`paginaSchema` en shared).
+- `common/fechas.ts`: conversión `YYYY-MM-DD` ↔ `@db.Date` en UTC.
+- `exigirCuentaActiva` vive en el módulo de cuentas y lo usan movimientos y transferencias.
+- e2e: movimientos (11 tests: 120 movimientos recorridos en páginas de 50/50/20 sin repetir ni saltear y en orden, cursor con item borrado, cada filtro y combinados, validaciones, recurrencia desvinculada, aislamiento) y transferencias (6 tests: ARS→USD con cotización y saldos, reglas de monto de destino, PATCH con cambio de moneda, aislamiento, paginación y filtro por cuenta).
+- Arreglo de infraestructura: ESLint ignora los temporales que crean tsup/vite al cargar su config (`*.bundled_*.mjs`); con lint y build en paralelo hacían fallar el lint de forma intermitente.

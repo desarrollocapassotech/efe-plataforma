@@ -10,7 +10,16 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['**/dist/**', '**/build/**', '**/coverage/**', '**/.turbo/**', '**/node_modules/**'],
+    ignores: [
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/.turbo/**',
+      '**/node_modules/**',
+      // Temporales que crean tsup/vite al cargar su config (carrera con lint en paralelo).
+      '**/*.bundled_*.mjs',
+      '**/*.timestamp-*.mjs',
+    ],
   },
   js.configs.recommended,
   tseslint.configs.recommended,

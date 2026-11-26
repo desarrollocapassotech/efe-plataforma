@@ -7,7 +7,7 @@ import type {
   ListarCuentasQuery,
 } from '@efe/shared/schemas';
 import { Prisma, type Cuenta as CuentaDb } from '@prisma/client';
-import { conflicto, noEncontrado } from '../../common/errors/errores';
+import { conflicto, noEncontrado, noProcesable } from '../../common/errors/errores';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const decimal = (d: Prisma.Decimal) => aString2Decimales(d.toString());
@@ -25,6 +25,13 @@ function aCuenta(c: CuentaDb, saldoActual: string): Cuenta {
     orden: c.orden,
     creadoEn: c.creadoEn.toISOString(),
   };
+}
+
+/** Las cuentas archivadas no reciben operaciones nuevas. */
+export function exigirCuentaActiva(cuenta: CuentaDb): void {
+  if (cuenta.archivada) {
+    throw noProcesable('CUENTA_ARCHIVADA', `La cuenta "${cuenta.nombre}" está archivada`);
+  }
 }
 
 @Injectable()

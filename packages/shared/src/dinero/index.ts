@@ -88,6 +88,26 @@ export function dividirEnCuotas(total: string, cantidad: number): string[] {
   return cuotas;
 }
 
+export interface LadoTransferencia {
+  moneda: Moneda;
+  monto: ValorDinero;
+}
+
+/**
+ * Cotización implícita de una transferencia entre monedas distintas, siempre como
+ * pesos por dólar (ARS/USD), sin importar el sentido: comprar 1 USD con 1.250 ARS y
+ * vender 1 USD por 1.250 ARS dan "1250.00". Si las monedas son iguales, null.
+ */
+export function cotizacionImplicita(
+  origen: LadoTransferencia,
+  destino: LadoTransferencia,
+): string | null {
+  if (origen.moneda === destino.moneda) return null;
+  const pesos = origen.moneda === 'ARS' ? origen.monto : destino.monto;
+  const dolares = origen.moneda === 'USD' ? origen.monto : destino.monto;
+  return aString2Decimales(dividir(pesos, dolares));
+}
+
 export interface OpcionesFormato {
   /** Cantidad de decimales a mostrar (default 2). */
   decimales?: 0 | 2;

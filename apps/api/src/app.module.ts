@@ -13,6 +13,8 @@ import { ConfigService } from './config/config.service';
 import { CategoriasModule } from './modules/categorias/categorias.module';
 import { CuentasModule } from './modules/cuentas/cuentas.module';
 import { HealthModule } from './modules/health/health.module';
+import { MovimientosModule } from './modules/movimientos/movimientos.module';
+import { TransferenciasModule } from './modules/transferencias/transferencias.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -48,6 +50,8 @@ import { PrismaModule } from './prisma/prisma.module';
     UsuariosModule,
     CuentasModule,
     CategoriasModule,
+    MovimientosModule,
+    TransferenciasModule,
   ],
   providers: [
     // Orden: rate limit → autenticación → rol → feature del plan.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   aString2Decimales,
+  cotizacionImplicita,
   comparar,
   dinero,
   dividir,
@@ -116,6 +117,23 @@ describe('dividirEnCuotas', () => {
     expect(() => dividirEnCuotas('100.001', 3)).toThrow(RangeError);
     expect(() => dividirEnCuotas('-100', 3)).toThrow(RangeError);
     expect(() => dividirEnCuotas('abc', 3)).toThrow(RangeError);
+  });
+});
+
+describe('cotizacionImplicita', () => {
+  it('pesos por dólar en los dos sentidos', () => {
+    expect(
+      cotizacionImplicita({ moneda: 'ARS', monto: '125000' }, { moneda: 'USD', monto: '100' }),
+    ).toBe('1250.00');
+    expect(
+      cotizacionImplicita({ moneda: 'USD', monto: '100' }, { moneda: 'ARS', monto: '123456.78' }),
+    ).toBe('1234.57');
+  });
+
+  it('null si las monedas son iguales', () => {
+    expect(
+      cotizacionImplicita({ moneda: 'ARS', monto: '10' }, { moneda: 'ARS', monto: '10' }),
+    ).toBeNull();
   });
 });
 
