@@ -1,0 +1,53 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds y caches
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+dev-dist/
+.vite/
+
+# Variables de entorno (solo se versiona .env.example)
+.env
+.env.*
+!.env.example
+
+# Claves de firma (Android / Play Store)
+*.keystore
+*.jks
+keystore.properties
+
+# Service accounts de Firebase / Google Cloud
+*-firebase-adminsdk-*.json
+serviceAccount*.json
+service-account*.json
+service_account*.json
+*-service-account*.json
+credentials*.json
+
+# Firebase CLI
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / SO
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Claude Code (config local)
+.claude/settings.local.json

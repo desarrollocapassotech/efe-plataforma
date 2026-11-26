@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+.turbo
+dev-dist
+pnpm-lock.yaml
+# Docs a mano: no reformatear
+*.md
