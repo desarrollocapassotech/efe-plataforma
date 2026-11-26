@@ -33,7 +33,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 3 — Tarjetas de crédito (Módulo 2)
 
-- [ ] 3.1 Cálculos de tarjeta en `shared`
+- [x] 3.1 Cálculos de tarjeta en `shared`
 - [ ] 3.2 Tarjetas, compras y pagos (API)
 - [ ] 3.3 Web: tarjetas
 
@@ -294,3 +294,13 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Al cambiar de mes, el resumen anterior queda atenuado hasta que llega el nuevo (`keepPreviousData`), sin saltos.
 - Tests nuevos (web): `formato` (2), `resumirCategorias` (2). Total web: 43.
 - Revisado en Chromium a 360 px con la API simulada (tarjeta, categorías, comparación, gráfico con tooltip). Falta probar con datos reales y en el celular.
+
+### 3.1 Cálculos de tarjeta en `shared`
+
+- **Tests primero**: la tabla de casos se commiteó sola (`test(shared): casos de período de resumen…`) contra un esqueleto que tiraba "No implementado", y después la implementación. Ese primer commit quedó con un error de tipos en el test (un parámetro de menos en un `it.each`), corregido en el commit de la implementación.
+- `@efe/shared/tarjetas` (subpath nuevo): `calcularResumen(fechaCompra, tarjeta, overrides)`, `generarCuotas(compra, tarjeta, overrides)`, `resumenDelPeriodo(periodo, tarjeta, overrides)` (fechas de un período, para el detalle del resumen y la API) y `proximoResumen(hoy, tarjeta, overrides)` (el primero que vence hoy o después: "sin período → el próximo a vencer" de 3.2).
+- **Distinto al plan en los overrides**: el plan decía "si hay override cuyo fechaCierre cae en ese mes, usarlo". Se aplicó **por período** (un override reemplaza al resumen calculado de su mismo `periodo`), que es la clave única de `CierreTarjeta` en el schema (`tarjetaId + periodo`). Con la regla por mes de cierre, un override que adelanta el cierre de diciembre al 28/11 taparía el cierre normal de noviembre. ARCHITECTURE §5.1 actualizado.
+- La cuota *n* va en `periodo de la cuota 1 + (n − 1)`: con días normales cada período tiene exactamente un resumen.
+- Caso límite documentado en el código: si cierre y vencimiento están a 1–2 días al final del mes (ej. 28 y 29), el clamp de febrero puede hacer que dos cierres venzan el mismo mes. No pasa con tarjetas reales (el vencimiento es ~10 días después del cierre); `resumenDelPeriodo` tiene un fallback para que siempre devuelva algo.
+- Valida días 1..31 enteros, fechas `YYYY-MM-DD` reales y cantidad de cuotas entera ≥ 1 (la de `dividirEnCuotas`).
+- Tests (33): mismo día del cierre / día siguiente, cruce de año, vencimiento el mismo mes o el siguiente, vencimiento igual al cierre, cierre 31 en febrero (común y bisiesto) y en meses de 30, overrides que adelantan, atrasan y de otro período, `resumenDelPeriodo`, `proximoResumen` (incluido "vence hoy"), 1/3/18 cuotas con suma exacta, centavos (0,05 en 3), cuotas con override, entradas inválidas. Total shared: 131.

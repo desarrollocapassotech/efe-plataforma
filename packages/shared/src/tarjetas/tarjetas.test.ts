@@ -61,9 +61,12 @@ describe('calcularResumen: primer cierre con fecha >= fecha de compra', () => {
       '2026-12-10',
       'vencimiento igual al cierre: mes siguiente',
     ],
-  ] as const)('%#: %s → %s (%s)', (tarjeta, compra, periodo, fechaCierre, fechaVencimiento) => {
-    expect(calcularResumen(compra, tarjeta)).toEqual({ periodo, fechaCierre, fechaVencimiento });
-  });
+  ] as const)(
+    '%#: %s → %s (%s)',
+    (tarjeta, compra, periodo, fechaCierre, fechaVencimiento, _caso) => {
+      expect(calcularResumen(compra, tarjeta)).toEqual({ periodo, fechaCierre, fechaVencimiento });
+    },
+  );
 
   describe('con overrides (cierres cargados a mano para un período)', () => {
     const adelanta: CierreOverride = {

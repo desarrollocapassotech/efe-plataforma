@@ -11,6 +11,7 @@ export default defineConfig({
     'features/index': 'src/features/index.ts',
     'recurrencias/index': 'src/recurrencias/index.ts',
     'schemas/index': 'src/schemas/index.ts',
+    'tarjetas/index': 'src/tarjetas/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

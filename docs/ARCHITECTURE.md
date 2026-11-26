@@ -220,7 +220,7 @@ export const FEATURES_POR_PLAN: Record<Plan, Feature[]> = {
 | Transferencias | Entidad propia, **no** cuentan como ingreso ni gasto. Permiten moneda distinta en origen y destino (compra de dólares). |
 | Compras con tarjeta | `CompraTarjeta` + N `Cuota`. Cada cuota tiene su `periodoResumen`. |
 | Período de resumen | `YYYY-MM` del **mes de vencimiento** del resumen (el mes en que se paga). |
-| Cálculo del período | Se busca el primer cierre con fecha ≥ fecha de compra (override en `CierreTarjeta` si existe; si no, `diaCierre` con clamp al último día del mes). El vencimiento es el override o la próxima ocurrencia de `diaVencimiento` posterior al cierre. La cuota *n* cae *n−1* resúmenes después. |
+| Cálculo del período | Se busca el primer cierre con fecha ≥ fecha de compra. Cada cierre calculado es `diaCierre` con clamp al último día del mes, y su vencimiento la próxima ocurrencia de `diaVencimiento` estrictamente posterior al cierre; el período es el mes de ese vencimiento. Un override (`CierreTarjeta`) **reemplaza al resumen de su mismo período** (clave `tarjetaId + periodo`), con sus dos fechas. La cuota *n* cae *n−1* períodos después. Cálculo en `@efe/shared/tarjetas`. |
 | Montos de cuota | `montoTotal / cantidadCuotas` truncado a centavos; la última cuota absorbe la diferencia. |
 | Gasto del mes (criterio caja) | Gastos del mes = movimientos de tipo GASTO con fecha en el mes **+** cuotas con `periodoResumen` = mes. A validar con Flor. |
 | Pago de resumen | `PagoResumen` descuenta del saldo de la cuenta, pero **no** es gasto (ya se contaron las cuotas). |

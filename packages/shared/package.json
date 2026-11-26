@@ -78,6 +78,16 @@
         "types": "./dist/schemas/index.d.cts",
         "default": "./dist/schemas/index.cjs"
       }
+    },
+    "./tarjetas": {
+      "import": {
+        "types": "./dist/tarjetas/index.d.ts",
+        "default": "./dist/tarjetas/index.js"
+      },
+      "require": {
+        "types": "./dist/tarjetas/index.d.cts",
+        "default": "./dist/tarjetas/index.cjs"
+      }
     }
   },
   "files": [
