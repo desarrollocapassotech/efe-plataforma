@@ -5,7 +5,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 ## Fase 0 — Preparación (manual)
 
 - [ ] 0.1 Seguridad del repo `gastos` (sacar keystores)
-- [ ] 0.2 GitHub (repo `capassotech/efe-plataforma`, archivar `efecapital-portal-customer`)
+- [ ] 0.2 GitHub (repo `desarrollocapassotech/efe-plataforma`, archivar `efecapital-portal-customer`)
 - [ ] 0.3 Neon (proyecto `efe-plataforma`, ramas `main`, `dev`, `test`)
 - [ ] 0.4 Firebase `efecapitaladmin` (Auth, service account, web app "EFE Web", sitios de Hosting)
 - [ ] 0.5 Otros (Render, Sentry, Docker Desktop)

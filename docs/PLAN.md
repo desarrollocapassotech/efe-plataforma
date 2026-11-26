@@ -52,7 +52,7 @@ git commit -m "chore: sacar keystores del repo"
 Si el repo fue público o compartido alguna vez: tratá las claves como comprometidas y pedí el reseteo de la *upload key* desde Play Console. Para limpiarlas del historial: `git filter-repo --path mi-release-key.keystore --path android/Untitled.jks --invert-paths` (reescribe historia, coordinalo si alguien más lo clonó).
 
 ### 0.2 GitHub
-- Crear repo privado `capassotech/efe-plataforma` (vacío, sin README).
+- Crear repo privado `desarrollocapassotech/efe-plataforma` (vacío, sin README).
 - Archivar `efecapital-portal-customer` (Settings → Archive).
 
 ### 0.3 Neon
@@ -93,7 +93,7 @@ Leé CLAUDE.md y docs/ARCHITECTURE.md (secciones 2 y 3). Armá el scaffold del m
 - Carpetas apps/ y packages/ vacías con .gitkeep donde haga falta.
 - docs/PROGRESS.md con la lista de pasos de docs/PLAN.md como checklist (todos sin marcar).
 - turbo.json con pipelines build (depende de ^build), dev (persistent, sin cache), lint, typecheck, test.
-- git init, primer commit, y configurá el remote origin a git@github.com:capassotech/efe-plataforma.git (no hagas push).
+- git init, primer commit, y configurá el remote origin a https://github.com/desarrollocapassotech/efe-plataforma.git (no hagas push).
 
 No crees todavía las apps.
 ```
