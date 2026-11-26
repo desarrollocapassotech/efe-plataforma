@@ -1,6 +1,6 @@
 import type { Moneda } from '@efe/shared/dinero';
 import { hoy, periodoDe } from '@efe/shared/fechas';
-import { CreditCard, Plus, Receipt, Target, type LucideIcon } from 'lucide-react';
+import { Plus, Receipt, Target, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Cargando, ErrorCarga, Vacio } from '@/components/Estados';
@@ -17,6 +17,7 @@ import { Comparacion } from '../components/Comparacion';
 import { Evolucion } from '../components/Evolucion';
 import { GastosPorCategoria } from '../components/GastosPorCategoria';
 import { ResumenDelMes } from '../components/ResumenDelMes';
+import { TarjetasInicio } from '../components/TarjetasInicio';
 import { useEvolucion, useResumenMensual } from '../hooks';
 
 const MESES_EVOLUCION = 12;
@@ -90,13 +91,9 @@ export function InicioPage() {
         <Evolucion meses={serie} moneda={moneda} periodoElegido={periodo} onElegir={setPeriodo} />
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Proximamente
-          icono={CreditCard}
-          titulo="Tarjetas"
-          texto="Lo que tenés comprometido en cuotas"
-          ruta="/tarjetas"
-        />
+      <TarjetasInicio moneda={moneda ?? me?.monedaPrincipal ?? 'ARS'} />
+
+      <div>
         <Proximamente
           icono={Target}
           titulo="Objetivos"

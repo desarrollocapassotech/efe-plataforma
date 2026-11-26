@@ -166,7 +166,12 @@ describe('Tarjetas, compras y pagos (e2e)', () => {
     for (const [i, periodo] of [p(1), p(2), p(3)].entries()) {
       const r = await resumen(a, periodo);
       expect(r.cuotas).toEqual([
-        expect.objectContaining({ compraId: compra.id, numero: i + 1, cantidadCuotas: 3 }),
+        expect.objectContaining({
+          compraId: compra.id,
+          numero: i + 1,
+          cantidadCuotas: 3,
+          montoTotal: '100.00',
+        }),
       ]);
       expect(r.saldos).toEqual([
         {

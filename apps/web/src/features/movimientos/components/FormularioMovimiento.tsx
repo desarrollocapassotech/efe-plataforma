@@ -1,7 +1,7 @@
 import { esCero } from '@efe/shared/dinero';
 import { hoy as hoyAR } from '@efe/shared/fechas';
 import type { Categoria, Cuenta, Movimiento, TipoMovimiento } from '@efe/shared/schemas';
-import { ArrowLeftRight, Link2Off, Loader2, Repeat, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, CreditCard, Link2Off, Loader2, Repeat, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -39,6 +39,7 @@ interface FormularioMovimientoProps {
   categorias: Categoria[];
   onListo: () => void;
   onTransferir?: () => void;
+  onConTarjeta?: () => void;
 }
 
 /**
@@ -52,6 +53,7 @@ export function FormularioMovimiento({
   categorias,
   onListo,
   onTransferir,
+  onConTarjeta,
 }: FormularioMovimientoProps) {
   const existente = 'id' in inicial ? inicial : null;
   const [tipo, setTipo] = useState<TipoMovimiento>(inicial.tipo);
@@ -275,15 +277,29 @@ export function FormularioMovimiento({
 
       <ErrorFormulario mensaje={error} />
 
-      {!existente && onTransferir && cuentas.filter((c) => !c.archivada).length > 1 && (
-        <Button
-          type="button"
-          variant="ghost"
-          className="w-full text-muted-foreground"
-          onClick={onTransferir}
-        >
-          <ArrowLeftRight /> Pasar plata entre tus cuentas
-        </Button>
+      {!existente && (onConTarjeta || onTransferir) && tipo === 'GASTO' && (
+        <div className="flex flex-col gap-1">
+          {onConTarjeta && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={onConTarjeta}
+            >
+              <CreditCard /> Fue con tarjeta de crédito
+            </Button>
+          )}
+          {onTransferir && cuentas.filter((c) => !c.archivada).length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground"
+              onClick={onTransferir}
+            >
+              <ArrowLeftRight /> Pasar plata entre tus cuentas
+            </Button>
+          )}
+        </div>
       )}
 
       {existente && (

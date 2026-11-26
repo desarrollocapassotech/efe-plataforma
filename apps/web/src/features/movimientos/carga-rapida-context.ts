@@ -1,11 +1,13 @@
 import type { Movimiento, TipoMovimiento, Transferencia } from '@efe/shared/schemas';
 import { createContext, useContext } from 'react';
+import type { CompraExistente } from '@/features/tarjetas/components/FormularioCompra';
 
 /** Qué abrir en el panel de carga. */
 export type PedidoCarga =
   | { modo: 'nuevo'; tipo: TipoMovimiento }
   | { modo: 'editar'; movimiento: Movimiento }
-  | { modo: 'transferencia'; transferencia?: Transferencia };
+  | { modo: 'transferencia'; transferencia?: Transferencia }
+  | { modo: 'compra'; existente?: CompraExistente };
 
 export interface CargaRapida {
   abrir: (pedido: PedidoCarga) => void;

@@ -35,7 +35,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 - [x] 3.1 Cálculos de tarjeta en `shared`
 - [x] 3.2 Tarjetas, compras y pagos (API)
-- [ ] 3.3 Web: tarjetas
+- [x] 3.3 Web: tarjetas
 
 ## Fase 4 — Objetivos financieros (Módulo 3)
 
@@ -318,3 +318,15 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Agregados en SQL: saldos y compromisos con `groupBy` (cuotas por tarjeta × período × moneda, pagos igual). El detalle del resumen sí trae las cuotas (se muestran una por una).
 - e2e `tarjetas.e2e-spec.ts` (10 tests): validaciones, compra en 3 cuotas en 3 resúmenes, cambio de cierre que mueve cuotas y vuelve, override que mueve cuotas y al borrarlo vuelven, edición de compra que regenera cuotas, paginación, pagos (moneda, saldo de cuenta, resumen mensual, borrar), próximo a vencer, compromisos, archivar/borrar, **aislamiento** entre dos usuarios. Suite completa contra Postgres 16 local: 71 tests verdes.
 - Sin migraciones: los modelos ya estaban en el schema.
+
+### 3.3 Web: tarjetas
+
+- **Tarjetas** (`/tarjetas`): una tarjeta grande por cada una con su color, "A pagar el sábado 5 de diciembre", lo que falta pagar del próximo resumen por moneda ("$ 412.350 + US$ 25") y una barra del ciclo con "Cierra en 6 días" o "Ya cerró: lo que compres ahora va al resumen siguiente. Vence en 9 días". Botón "Comprometido" arriba, "Agregar tarjeta" abajo, archivadas colapsadas.
+- **Alta/edición** (panel): nombre, marca (chips), día de cierre y de vencimiento con una explicación corta, últimos 4 opcionales, color (paleta cerrada). Archivar/eliminar al pie; `TARJETA_CON_COMPRAS` ofrece archivar.
+- **Compra con tarjeta**: desde el "+" → "Fue con tarjeta de crédito" (opción secundaria, solo en modo Gasto). Tarjeta (la última usada), monto grande con Pesos/Dólares, cuotas en chips 1 pago/3/6/12/18 + "Otra", "Puse el total / Puse cada cuota" (si es por cuota calcula el total con `multiplicar`), **vista previa** "La primera cuota en el resumen que vence el 5 de enero y la última en marzo 2027 ($ 45.000 por mes)" con `generarCuotas`/`resumenDelPeriodo` de shared en el front, categoría, fecha y "¿Qué compraste?" (si queda vacío se usa el nombre de la categoría: la API lo exige). La vista previa **no conoce las fechas corregidas a mano** (la API no las expone en el listado); la API sí las usa al guardar.
+- **Detalle del resumen** (`/tarjetas/:id?periodo=`): navegador de período (sin `?periodo`, el próximo a vencer), tarjeta azul con vencimiento, cierre y "Te falta pagar" por moneda (o "Pagado"), "¿El banco cambió las fechas? Corregilas" (panel con las dos fechas → `PUT cierres`, y "Volver a las fechas de siempre" → `DELETE`), botón **Registrar pago** por moneda pendiente (panel: monto = lo que falta, cuenta de esa moneda, fecha), compras del resumen ("Cuota 2 de 12", tocar → editar o eliminar la compra en el mismo panel del "+") y pagos (con eliminar). Para editar desde el resumen se agregó `montoTotal` a cada cuota de `GET /tarjetas/resumen`.
+- **Comprometido** (`/tarjetas/comprometido`): barras apiladas por tarjeta de los próximos 12 meses (color de cada tarjeta, leyenda, tooltip con montos exactos, un solo eje), detalle del mes elegido con link al resumen de cada tarjeta y la lista "Mes por mes". Moneda a elegir si hay compras en las dos. Gráfico lazy (reusa el chunk de Recharts).
+- **Inicio**: el placeholder de tarjetas pasó a "Próximo resumen" (el que vence primero con saldo pendiente en la moneda elegida) y "Comprometido en los próximos 3 meses". Sin tarjetas, un acceso "¿Usás tarjeta de crédito?".
+- Los colores de las tarjetas son del usuario (dato que identifica a cada una), de la misma paleta cerrada que las categorías; no pasan por el validador de dataviz (no son una paleta categórica del sistema), por eso el gráfico siempre tiene leyenda y la lista con los números.
+- Tests nuevos (web): vista previa de cuotas (3). Total web: 46.
+- Revisado en Chromium a 360 px con la API simulada (listado, resumen con pagos, comprometido, compra con vista previa). Falta probar contra la API real y en el celular.

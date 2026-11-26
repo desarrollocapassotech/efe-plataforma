@@ -4,6 +4,8 @@ import { Cargando, ErrorCarga } from '@/components/Estados';
 import { Panel } from '@/components/ui/panel';
 import { useCategorias } from '@/features/categorias/hooks';
 import { useCuentas } from '@/features/cuentas/hooks';
+import { FormularioCompra } from '@/features/tarjetas/components/FormularioCompra';
+import { useTarjetas } from '@/features/tarjetas/hooks';
 import { CargaRapidaContext, type PedidoCarga } from '../carga-rapida-context';
 import { FormularioMovimiento } from './FormularioMovimiento';
 import { FormularioTransferencia } from './FormularioTransferencia';
@@ -16,6 +18,8 @@ function tituloDe(pedido: PedidoCarga): string {
       return pedido.movimiento.tipo === 'GASTO' ? 'Editar gasto' : 'Editar ingreso';
     case 'transferencia':
       return pedido.transferencia ? 'Editar movimiento entre cuentas' : 'Pasar plata entre cuentas';
+    case 'compra':
+      return pedido.existente ? 'Editar compra con tarjeta' : 'Compra con tarjeta';
   }
 }
 
@@ -80,15 +84,28 @@ function ContenidoCarga({
 }) {
   const cuentas = useCuentas();
   const categorias = useCategorias();
+  const tarjetas = useTarjetas();
 
-  if (cuentas.isPending || categorias.isPending) return <Cargando />;
-  if (cuentas.isError || categorias.isError) {
+  if (cuentas.isPending || categorias.isPending || tarjetas.isPending) return <Cargando />;
+  if (cuentas.isError || categorias.isError || tarjetas.isError) {
     return (
       <ErrorCarga
         onReintentar={() => {
           void cuentas.refetch();
           void categorias.refetch();
+          void tarjetas.refetch();
         }}
+      />
+    );
+  }
+
+  if (pedido.modo === 'compra') {
+    return (
+      <FormularioCompra
+        existente={pedido.existente}
+        tarjetas={tarjetas.data}
+        categorias={categorias.data}
+        onListo={onListo}
       />
     );
   }
@@ -110,6 +127,7 @@ function ContenidoCarga({
       categorias={categorias.data}
       onListo={onListo}
       onTransferir={() => onCambiar({ modo: 'transferencia' })}
+      onConTarjeta={() => onCambiar({ modo: 'compra' })}
     />
   );
 }

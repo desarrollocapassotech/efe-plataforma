@@ -194,6 +194,8 @@ export const CuotaDeResumenSchema = z.object({
   numero: z.number().int(),
   cantidadCuotas: z.number().int(),
   monto: z.string(),
+  /** Total de la compra (para editarla desde el resumen). */
+  montoTotal: z.string(),
   moneda: MonedaSchema,
   categoria: CategoriaResumidaSchema.nullable(),
 });

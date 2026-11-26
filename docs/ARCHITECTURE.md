@@ -131,7 +131,7 @@ src/
 │   ├── recurrencias/      # Más → Recurrentes
 │   ├── cuentas/
 │   ├── categorias/
-│   ├── tarjetas/
+│   ├── tarjetas/          # listado, resumen, compra (desde el "+"), comprometido
 │   ├── objetivos/
 │   ├── indicadores/
 │   └── perfil/            # datos de la cuenta, exportar, eliminar cuenta
