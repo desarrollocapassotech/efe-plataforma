@@ -10,6 +10,8 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { DecimalInterceptor } from './common/money/decimal.interceptor';
 import { ConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
+import { CategoriasModule } from './modules/categorias/categorias.module';
+import { CuentasModule } from './modules/cuentas/cuentas.module';
 import { HealthModule } from './modules/health/health.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -44,6 +46,8 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     HealthModule,
     UsuariosModule,
+    CuentasModule,
+    CategoriasModule,
   ],
   providers: [
     // Orden: rate limit → autenticación → rol → feature del plan.

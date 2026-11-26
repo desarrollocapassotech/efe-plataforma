@@ -23,7 +23,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 2 — Finanzas personales (Módulo 1)
 
-- [ ] 2.1 Cuentas y categorías (API)
+- [x] 2.1 Cuentas y categorías (API)
 - [ ] 2.2 Movimientos y transferencias (API)
 - [ ] 2.3 Recurrencias + job
 - [ ] 2.4 Resumen mensual y evolución (API)
@@ -182,3 +182,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - `apps/admin/CLAUDE.md`: comandos del monorepo, sección "Migración en curso", rutas a Faktia (`../../../../FAKTIA`) y a los logos (`../../../Imagenes`) actualizadas, tokens en el preset.
 - Para correrlo hace falta `apps/admin/.env` con `VITE_FAKTIA_API_URL` y `VITE_FAKTIA_APP_URL` (copiarlo del repo viejo). Falta la prueba manual de login, clientes, facturas y facturación mensual contra Firestore y Faktia.
 - Arreglos de pasos anteriores: la web pasó a `tailwind-merge` 2.x (la 3 es para Tailwind 4) y el test del guard de la API dejó de depender de la hora.
+
+### 2.1 Cuentas y categorías (API)
+
+- Schemas en `@efe/shared/schemas` (`cuentas.ts`, `categorias.ts`) y nuevos en `base.ts`: `ImporteSchema` (con signo, para saldos iniciales), `ColorSchema` (`#RRGGBB`, se guarda en mayúsculas), `BooleanoQuerySchema` (`z.stringbool()`, para `?incluirArchivadas=true`), `IdSchema`. Todos estrictos: rechazan campos desconocidos (incluido `usuarioId`).
+- Cuentas: `GET /cuentas?incluirArchivadas`, `POST`, `PATCH /:id`, `DELETE /:id`. Con `@RequiresFeature('finanzas')`.
+  - `saldoActual` se calcula con un `$queryRaw` (subconsultas agrupadas por cuenta) y nunca trae filas: saldo inicial + ingresos − gastos + transferencias entrantes (`montoDestino`) − salientes (`montoOrigen`) − pagos de resumen. Las cuotas no afectan saldos.
+  - Para revisar: el saldo incluye movimientos con fecha futura si el usuario los carga. Si se prefiere "saldo a hoy", es un filtro `fecha <= hoy` en la consulta.
+  - `DELETE` con movimientos, transferencias (origen o destino), recurrencias o pagos → 409 `CUENTA_CON_MOVIMIENTOS`. Cambiar la moneda con operaciones → 409 `CUENTA_MONEDA_BLOQUEADA` (mandar la misma moneda no cuenta como cambio).
+  - Orden nuevo = máximo + 1. Archivar es `PATCH { archivada: true }`.
+- Categorías: `GET /categorias?tipo&incluirArchivadas`, `POST`, `PATCH /:id`, `DELETE /:id`, `PUT /categorias/orden`.
+  - Nombre único por usuario y tipo **sin distinguir mayúsculas** ("Café" = "café"), con chequeo previo y el unique de la base como respaldo ante carreras → 409 `CATEGORIA_DUPLICADA`.
+  - El tipo no se puede cambiar (rompería movimientos ya cargados).
+  - `DELETE` en uso (movimientos, recurrencias o compras) → 409 `CATEGORIA_EN_USO`.
+  - `PUT /orden`: si alguna categoría no es del usuario → 404 y no se toca nada.
+- Recurso de otro usuario o inexistente → 404 `NO_ENCONTRADO` (helpers `noEncontrado` / `conflicto` en `common/errors/errores.ts`).
+- Agregado `GET /categorias?incluirArchivadas` (el plan solo pedía `?tipo`) para que la pantalla de gestión pueda mostrar y desarchivar.
+- e2e: `test/helpers.ts` (levantar la app, crear usuarios de prueba, borrarlos). Cuentas (7 tests) y categorías (8 tests): CRUD, validaciones, aislamiento entre dos usuarios, saldo con todos los tipos de operación (insertados con Prisma: movimientos, transferencias ARS→USD, pago de resumen y una compra en cuotas que no debe contar).
