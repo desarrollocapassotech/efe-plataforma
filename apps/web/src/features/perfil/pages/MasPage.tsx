@@ -1,4 +1,4 @@
-import { ChevronRight, LogOut, Tags, Wallet, type LucideIcon } from 'lucide-react';
+import { ChevronRight, LogOut, Repeat, Tags, Wallet, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Pagina } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
@@ -21,9 +21,15 @@ const OPCIONES: { ruta: string; titulo: string; detalle: string; icono: LucideIc
     detalle: 'En qué gastás y de dónde entra',
     icono: Tags,
   },
+  {
+    ruta: '/mas/recurrentes',
+    titulo: 'Recurrentes',
+    detalle: 'Lo que se carga solo cada mes',
+    icono: Repeat,
+  },
 ];
 
-// "Más": lo que no se usa todos los días. Recurrentes (2.6) y perfil (7.1) se suman acá.
+// "Más": lo que no se usa todos los días. El perfil (7.1) se suma acá.
 export function MasPage() {
   const { logout } = useAuth();
   const { data: me } = useMe();

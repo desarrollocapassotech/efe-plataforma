@@ -1,11 +1,12 @@
 import { MONEDAS, sumar, aString2Decimales, type Moneda } from '@efe/shared/dinero';
 import type { Cuenta } from '@efe/shared/schemas';
-import { ChevronDown, ChevronRight, Plus, Wallet } from 'lucide-react';
+import { ArrowLeftRight, ChevronDown, ChevronRight, Plus, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { CurrencyAmount } from '@/components/CurrencyAmount';
 import { Cargando, ErrorCarga, Vacio } from '@/components/Estados';
 import { Pagina } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
+import { useCargaRapida } from '@/features/movimientos/carga-rapida-context';
 import { useMe } from '@/features/perfil/hooks';
 import { cn } from '@/lib/utils';
 import { CuentaPanel } from '../components/CuentaPanel';
@@ -23,6 +24,7 @@ function totalesPorMoneda(cuentas: Cuenta[]): { moneda: Moneda; total: string }[
 export function CuentasPage() {
   const cuentas = useCuentas();
   const { data: me } = useMe();
+  const { abrir: abrirCarga } = useCargaRapida();
   const [panel, setPanel] = useState<{ abierto: boolean; cuenta: Cuenta | null }>({
     abierto: false,
     cuenta: null,
@@ -83,6 +85,15 @@ export function CuentasPage() {
           <Button className="w-full" size="lg" onClick={() => abrir(null)}>
             <Plus /> Agregar cuenta
           </Button>
+          {activas.length > 1 && (
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => abrirCarga({ modo: 'transferencia' })}
+            >
+              <ArrowLeftRight /> Pasar plata entre cuentas
+            </Button>
+          )}
 
           {archivadas.length > 0 && (
             <section>

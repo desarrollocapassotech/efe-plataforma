@@ -28,7 +28,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 2.3 Recurrencias + job
 - [x] 2.4 Resumen mensual y evolución (API)
 - [x] 2.5 Web: onboarding, cuentas y categorías
-- [ ] 2.6 Web: movimientos y carga rápida
+- [x] 2.6 Web: movimientos y carga rápida
 - [ ] 2.7 Web: dashboard
 
 ## Fase 3 — Tarjetas de crédito (Módulo 2)
@@ -260,3 +260,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - TanStack Query: `['cuentas']` y `['categorias']` traen todo (incluidas archivadas) y la pantalla separa; cada mutación invalida su clave.
 - Tests nuevos: `lib/montos` (7) y `MoneyInput` (3). Total web: 27.
 - Falta probar a mano en el navegador y en el celular (no hay herramienta de navegador en esta sesión).
+
+### 2.6 Web: movimientos y carga rápida
+
+- **Carga rápida**: botón flotante "+" en toda la zona privada (arriba de la barra inferior en móvil, abajo a la derecha en desktop). Abre un único panel (`CargaRapidaProvider` + `useCargaRapida()`, cualquier pantalla puede abrirlo) con: Gasto/Ingreso, `MoneyInput` grande y enfocado, categorías como grilla de emojis en el orden del usuario (Categorías → Ordenar = "las más usadas primero"), cuenta (la última usada, recordada en `localStorage` con `efe:ultimaCuenta`; el selector solo aparece si hay más de una cuenta), fecha con atajos Hoy / Ayer / Otro día, nota opcional y "Se repite todos los meses". **Guardar** queda fijo al pie del panel (`PieFijo`): tocar "+", escribir el monto y Guardar (la categoría es opcional).
+  - **Alta optimista**: el movimiento aparece en las listas cacheadas que coinciden con sus filtros apenas se toca Guardar (atenuado hasta que responde la API) y el panel se cierra; si la API falla, se saca y se avisa con un toast. Después se invalidan movimientos, transferencias, cuentas, resumen y recurrencias.
+  - "Se repite todos los meses" (gasto o ingreso; el plan lo pedía para ingresos, se habilitó para los dos porque alquiler y servicios son el caso típico) crea una **recurrencia** mensual con el día de la fecha elegida; la API genera en el momento el movimiento de este mes. Descripción por defecto: la nota, o el nombre de la categoría.
+  - Opciones secundarias del mismo botón: **"Pasar plata entre tus cuentas"** (link al pie del panel, cambia el panel a transferencia). "Con tarjeta" se suma en la Fase 3.
+- **Transferencias**: origen y destino como chips; si las monedas difieren se pide cuánto llegó y se muestra "Te quedó un dólar a $ X" (`cotizacionImplicita` de shared). También desde Cuentas ("Pasar plata entre cuentas", si hay 2 o más).
+- **Movimientos** (`/movimientos`): navegador de mes (`components/MesNavigator`), lista agrupada por día ("Hoy", "Ayer", "Lunes 23 de noviembre") con el neto del día por moneda (las transferencias no cuentan), scroll infinito con el cursor de la API (IntersectionObserver + botón "Ver más" de respaldo). Tocar un item abre el mismo panel en modo edición, con Eliminar al pie.
+  - **Filtros en un panel** (botón "Filtrar" con contador): búsqueda en notas, Todo / Gastos / Ingresos / Entre cuentas, cuenta y categoría. Los filtros activos se ven como chips que se quitan con un toque. **Los filtros y el mes viven en la URL** (`?mes=2026-11&categoria=…`): el dashboard (2.7) puede linkear a la lista filtrada (`linkMovimientos`).
+  - Transferencias en la lista: se piden todas las del mes (son pocas; se recorren las páginas de a 100) y se mezclan por fecha con los movimientos. Con scroll infinito, las transferencias más viejas que el último movimiento cargado se muestran recién cuando llega esa página (`agruparPorDia`, con tests). Se ocultan si se filtra por categoría o texto.
+  - Editar un movimiento generado por una recurrencia muestra el aviso de que los meses siguientes se siguen cargando (la API lo desvincula, regla de 2.2).
+- **Recurrentes** (Más → Recurrentes, `/mas/recurrentes`): agrupados en Gastos fijos / Ingresos fijos / Pausados, con "Cada mes, el día 10" y la próxima fecha. Panel de alta/edición (nombre, monto, cada mes o una vez por año, día y mes, categoría, cuenta), **Pausar/Reanudar** y Eliminar al pie. Las altas desde acá arrancan hoy (`desde` = hoy). Reactivar no recupera meses atrasados (decisión abierta de 2.3, sin cambios).
+- Helpers nuevos: `lib/fechas-ui.ts` (nombres de mes y día en español, sin `Intl`, con tests) y `lib/preferencias.ts` (localStorage con try/catch: en modo privado se usan los defaults).
+- Sin dependencias nuevas.
+- Tests nuevos (web): `fechas-ui` (4), `agruparPorDia` (3), formulario de carga rápida (5: defaults y última cuenta, validación, cambio de tipo, alta que crea recurrencia). Total web: 39.
+- Revisado en Chromium a 360 px con una API simulada (arnés local, no versionado): lista, carga, transferencia entre monedas, filtros, edición, recurrentes y el alta optimista. Falta probar a mano contra la API real y en el celular.

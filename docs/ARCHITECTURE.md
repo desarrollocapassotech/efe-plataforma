@@ -127,7 +127,8 @@ src/
 │   ├── auth/              # login, registro, recuperar contraseña
 │   ├── onboarding/
 │   ├── dashboard/
-│   ├── movimientos/
+│   ├── movimientos/       # lista, carga rápida (botón "+"), transferencias
+│   ├── recurrencias/      # Más → Recurrentes
 │   ├── cuentas/
 │   ├── categorias/
 │   ├── tarjetas/

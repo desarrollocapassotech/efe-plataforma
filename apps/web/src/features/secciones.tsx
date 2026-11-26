@@ -1,19 +1,8 @@
-import { ArrowLeftRight, CreditCard, Target } from 'lucide-react';
+import { CreditCard, Target } from 'lucide-react';
 import { EnConstruccion, Pagina } from '@/components/Pantallas';
 
 // Páginas provisorias de las secciones que se construyen en las fases 2 a 4 del plan.
 // Cuando cada una se implemente, se mueve a su carpeta en features/.
-
-export function MovimientosPage() {
-  return (
-    <Pagina titulo="Movimientos">
-      <EnConstruccion
-        icono={ArrowLeftRight}
-        texto="Acá vas a ver y cargar tus gastos e ingresos."
-      />
-    </Pagina>
-  );
-}
 
 export function TarjetasPage() {
   return (

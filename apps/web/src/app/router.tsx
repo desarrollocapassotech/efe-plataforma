@@ -9,7 +9,9 @@ import { CuentasPage } from '@/features/cuentas/pages/CuentasPage';
 import { InicioPage } from '@/features/dashboard/pages/InicioPage';
 import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage';
 import { MasPage } from '@/features/perfil/pages/MasPage';
-import { MovimientosPage, ObjetivosPage, TarjetasPage } from '@/features/secciones';
+import { MovimientosPage } from '@/features/movimientos/pages/MovimientosPage';
+import { RecurrentesPage } from '@/features/recurrencias/pages/RecurrentesPage';
+import { ObjetivosPage, TarjetasPage } from '@/features/secciones';
 import { RequiereSesion, SoloPublico } from './guards';
 import { AppLayout } from './layout/AppLayout';
 
@@ -50,6 +52,7 @@ export const router = createBrowserRouter([
           { path: '/mas', element: <MasPage /> },
           { path: '/mas/cuentas', element: <CuentasPage /> },
           { path: '/mas/categorias', element: <CategoriasPage /> },
+          { path: '/mas/recurrentes', element: <RecurrentesPage /> },
         ],
       },
     ],

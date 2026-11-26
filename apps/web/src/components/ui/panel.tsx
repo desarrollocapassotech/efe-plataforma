@@ -71,3 +71,17 @@ export function Panel({
     </DialogPrimitive.Root>
   );
 }
+
+/**
+ * Pie fijo dentro del contenido de un Panel (para el botón principal de un formulario):
+ * queda siempre visible abajo, sin tener que scrollear. Va al final del formulario.
+ */
+export function PieFijo({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn('sticky -bottom-5 z-10 -mx-5 -mb-5 border-t bg-card px-5 pb-8 pt-3', className)}
+    >
+      {children}
+    </div>
+  );
+}
