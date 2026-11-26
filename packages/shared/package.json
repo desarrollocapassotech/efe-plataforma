@@ -1,0 +1,85 @@
+{
+  "name": "@efe/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tipos, schemas zod, cálculos financieros y features por plan compartidos por API y front",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./dinero": {
+      "import": {
+        "types": "./dist/dinero/index.d.ts",
+        "default": "./dist/dinero/index.js"
+      },
+      "require": {
+        "types": "./dist/dinero/index.d.cts",
+        "default": "./dist/dinero/index.cjs"
+      }
+    },
+    "./fechas": {
+      "import": {
+        "types": "./dist/fechas/index.d.ts",
+        "default": "./dist/fechas/index.js"
+      },
+      "require": {
+        "types": "./dist/fechas/index.d.cts",
+        "default": "./dist/fechas/index.cjs"
+      }
+    },
+    "./features": {
+      "import": {
+        "types": "./dist/features/index.d.ts",
+        "default": "./dist/features/index.js"
+      },
+      "require": {
+        "types": "./dist/features/index.d.cts",
+        "default": "./dist/features/index.cjs"
+      }
+    },
+    "./schemas": {
+      "import": {
+        "types": "./dist/schemas/index.d.ts",
+        "default": "./dist/schemas/index.js"
+      },
+      "require": {
+        "types": "./dist/schemas/index.d.cts",
+        "default": "./dist/schemas/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@efe/config": "workspace:*",
+    "eslint": "^10.15.0",
+    "tsup": "^9.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.2"
+  }
+}

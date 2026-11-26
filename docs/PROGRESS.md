@@ -14,7 +14,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 ## Fase 1 — Base del monorepo
 
 - [x] 1.1 Scaffold del monorepo
-- [ ] 1.2 `packages/shared`: dinero, fechas y features
+- [x] 1.2 `packages/shared`: dinero, fechas y features
 - [ ] 1.3 Scaffold de la API
 - [ ] 1.4 Schema Prisma del Lanzamiento 1 + seed
 - [ ] 1.5 Autenticación, roles y features
@@ -88,3 +88,16 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - `packages/config` exporta: `@efe/config/tsconfig/{base,node,react}.json`, `@efe/config/eslint`, `@efe/config/eslint/react` y `@efe/config/tailwind` (preset vacío, se completa en 1.6).
 - `tsconfig/node.json` usa `NodeNext`; la API (1.3) va a necesitar su propio override (CommonJS + decoradores para Nest).
 - Prettier no formatea `*.md` (los docs se escriben a mano).
+- Se trabaja directo en `main` (sin ramas por paso ni PRs), por pedido de Elías.
+
+### 1.2 `packages/shared`
+
+- Build con tsup en **ESM + CJS** (el plan decía solo ESM): la API Nest compila a CommonJS y Jest no carga ESM sin configuración extra. Subpaths: `@efe/shared`, `/dinero`, `/fechas`, `/features`, `/schemas`.
+- **Sin `date-fns`**: las fechas se manejan como strings con aritmética de enteros y `Date.UTC`, que no depende de la zona del proceso. Una dependencia menos. Si más adelante hace falta algo complejo, se evalúa.
+- Extras en `fechas`: `esFechaValida`, `esPeriodoValido`, `diasEnPeriodo`, `sumarDias`, `compararFechas` y `hoy(zona = 'America/Argentina/Buenos_Aires')` (para jobs y para "no generar movimientos futuros" en 2.3). Años válidos desde 1900.
+- `formatearMoneda` es manual (no usa `Intl`) para dar el mismo resultado en Node y en cualquier navegador. Usa espacio no separable (U+00A0) entre símbolo y número, igual que Intl es-AR. Opciones: `decimales: 0 | 2`, `signo`.
+- `dividirEnCuotas` exige un total string no negativo con hasta 2 decimales; redondeo general half up.
+- `MontoSchema`: positivo (> 0), hasta 16 dígitos enteros y 2 decimales (entra en `Decimal(18, 2)`). Rechaza números: los montos viajan como string.
+- zod 4 (compatible con `nestjs-zod` 5).
+- Tests en Vitest con `TZ=America/Sao_Paulo` para detectar dependencias de la zona horaria.
+- `pnpm-workspace.yaml` permite el script de instalación de `esbuild` (pnpm 10 los bloquea por defecto). Prisma se va a sumar en 1.3.
