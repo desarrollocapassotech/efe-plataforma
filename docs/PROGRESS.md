@@ -29,7 +29,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 2.4 Resumen mensual y evolución (API)
 - [x] 2.5 Web: onboarding, cuentas y categorías
 - [x] 2.6 Web: movimientos y carga rápida
-- [ ] 2.7 Web: dashboard
+- [x] 2.7 Web: dashboard
 
 ## Fase 3 — Tarjetas de crédito (Módulo 2)
 
@@ -277,3 +277,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Sin dependencias nuevas.
 - Tests nuevos (web): `fechas-ui` (4), `agruparPorDia` (3), formulario de carga rápida (5: defaults y última cuenta, validación, cambio de tipo, alta que crea recurrencia). Total web: 39.
 - Revisado en Chromium a 360 px con una API simulada (arnés local, no versionado): lista, carga, transferencia entre monedas, filtros, edición, recurrentes y el alta optimista. Falta probar a mano contra la API real y en el celular.
+
+### 2.7 Web: dashboard
+
+- Hecho con la skill de dataviz (forma primero, color al final y validado con su script).
+- **Inicio** (`/`), de arriba hacia abajo, legible en 360 px:
+  1. Navegador de mes y, solo si el mes tiene datos en las dos monedas, Pesos / Dólares (**sin convertir**, decisión #2 de §11 sigue abierta). La moneda elegida se deriva: la elegida si tiene datos, si no la principal, si no la primera.
+  2. **Tarjeta principal** (azul): "Te queda este mes" como cifra protagonista (saldo del mes, sin centavos), "Entró" y "Gastaste" (con "$ X con tarjeta" si hay cuotas) y un medidor "Gastaste el 82 % de lo que entró" (dorado hasta 80 %, `warning` de 80 a 100 %, `destructive` + ícono de alerta arriba de 100 %). **Distinto al plan**: las 4 tarjetas que pedía (ingresos, gastos, saldo, % gastado) quedaron en una sola tarjeta con jerarquía, por la guía de "pocas tarjetas, claras".
+  3. **¿En qué se fue la plata?**: barras horizontales ordenadas (en vez de donut: las barras se comparan mejor, anti-patrón de la skill), cada una con el color de su categoría, monto y %; las 5 primeras + "Otras N" (`resumirCategorias`, con tests). Tocar una fila abre Movimientos filtrado por ese mes y categoría (con `linkMovimientos` de 2.6).
+  4. **Comparado con el mes anterior**: "Subió 13 %" / "Bajó…" con flecha + color semántico (gastos que suben = `destructive`, ingresos que suben = `success`) y el valor del mes anterior.
+  5. **Últimos 12 meses**: barras agrupadas Entró vs Gastaste, un solo eje, ticks compactos ("$ 1,1 M", "$ 350 mil"), tooltip con los montos exactos, leyenda siempre visible, "Ver los números" (tabla) para lectores de pantalla y para quien no quiera el gráfico. Tocar un mes del gráfico lo elige arriba. Termina siempre en el mes actual.
+  6. Accesos "Tarjetas" y "Objetivos" con "Muy pronto" (placeholders hasta las fases 3 y 4).
+- **Tokens nuevos en el preset**: `--chart-ingresos` (azul) y `--chart-gastos` (dorado), clases `bg-chart-ingresos`/`bg-chart-gastos`. El azul marino de `--primary` no sirve como serie (muy oscuro, casi gris para el validador): se usaron el azul y el dorado de EFE con más brillo, validados con `validate_palette.js` en claro (sobre blanco) y oscuro (sobre la tarjeta oscura): bandas de luminosidad, croma, separación con daltonismo (ΔE ≥ 27) y contraste ≥ 3:1.
+- **Recharts 3** (dependencia nueva en la web, permitida por el plan): la librería de gráficos más usada en React, declarativa, con SVG accesible y tooltips; la usaba `gastos`. Se carga **lazy** (chunk propio de ~118 kB gzip) para que no pese en la carga inicial ni en las otras pantallas. Recharts pinta con atributos SVG (no lee `var()`), así que los colores se leen de los tokens con `getComputedStyle`.
+- Plata: los montos se pasan a `number` **solo para la geometría** (alto de barras, ancho del medidor); todo lo que se muestra sale del string con `formatearMoneda`/`montoCompacto` (`lib/formato.ts`, con tests).
+- Al cambiar de mes, el resumen anterior queda atenuado hasta que llega el nuevo (`keepPreviousData`), sin saltos.
+- Tests nuevos (web): `formato` (2), `resumirCategorias` (2). Total web: 43.
+- Revisado en Chromium a 360 px con la API simulada (tarjeta, categorías, comparación, gráfico con tooltip). Falta probar con datos reales y en el celular.

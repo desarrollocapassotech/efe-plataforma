@@ -38,6 +38,10 @@ const CLARO = {
   '--warning-foreground': '0 0% 100%',
   '--destructive': '0 65% 46%',
   '--destructive-foreground': '0 0% 100%',
+  // Series de gráficos (ingresos vs gastos): azul y dorado de EFE con el brillo y la
+  // saturación que validó la skill de dataviz (daltonismo y contraste sobre la tarjeta).
+  '--chart-ingresos': '219 61% 48%',
+  '--chart-gastos': '45 100% 36%',
   '--border': '220 13% 88%',
   '--input': '220 13% 84%',
   '--ring': '222 47% 22%',
@@ -73,6 +77,8 @@ const OSCURO = {
   '--gold-foreground': '222 50% 10%',
   '--destructive': '0 62% 45%',
   '--destructive-foreground': '0 0% 100%',
+  '--chart-ingresos': '218 77% 61%',
+  '--chart-gastos': '45 100% 35%',
   '--border': '222 30% 20%',
   '--input': '222 30% 22%',
   '--ring': '49 94% 60%',
@@ -148,6 +154,7 @@ const preset = {
         muted: { DEFAULT: color('muted'), foreground: color('muted-foreground') },
         accent: { DEFAULT: color('accent'), foreground: color('accent-foreground') },
         success: { DEFAULT: color('success'), foreground: color('success-foreground') },
+        chart: { ingresos: color('chart-ingresos'), gastos: color('chart-gastos') },
         warning: { DEFAULT: color('warning'), foreground: color('warning-foreground') },
         popover: { DEFAULT: color('popover'), foreground: color('popover-foreground') },
         card: { DEFAULT: color('card'), foreground: color('card-foreground') },
