@@ -26,7 +26,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 2.1 Cuentas y categorías (API)
 - [x] 2.2 Movimientos y transferencias (API)
 - [x] 2.3 Recurrencias + job
-- [ ] 2.4 Resumen mensual y evolución (API)
+- [x] 2.4 Resumen mensual y evolución (API)
 - [ ] 2.5 Web: onboarding, cuentas y categorías
 - [ ] 2.6 Web: movimientos y carga rápida
 - [ ] 2.7 Web: dashboard
@@ -231,3 +231,13 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - `apps/api/.env` local tiene un `JOBS_SECRET` aleatorio para probar el job (`curl -X POST -H "X-Jobs-Secret: ..." localhost:3000/api/v1/internal/jobs/recurrencias`).
 - Tests: unit del guard del secreto (3) y e2e (10): generación al crear sin fechas futuras, validaciones, 401 sin secreto o con token de usuario, idempotencia (job dos veces), borrar/editar un generado no lo recrea, desactivar y reactivar sin recuperar atrasados, anual, borrar la recurrencia conserva los movimientos, PATCH, aislamiento.
 - El cron que llama al job es el paso 8.3 (`jobs.yml`).
+
+### 2.4 Resumen mensual y evolución (API)
+
+- `GET /resumen/mensual?periodo=YYYY-MM` (sin período: mes actual en Argentina) → `{ periodo, monedas: [...] }`, una entrada por moneda con datos en el mes (ARS primero), sin mezclar monedas. Cada una: `ingresos`, `gastos` (= `gastosMovimientos` + `gastosTarjeta`), `saldo`, `porcentajeGastado` (null sin ingresos), `porCategoria` (solo gastos, de mayor a menor; las cuotas suman a la categoría de su compra; "Sin categoría" con `categoriaId`, `color` e `icono` en null) y `comparacionMesAnterior` (`ingresosAnterior`, `gastosAnterior`, `variacionIngresos`, `variacionGastos`; variación null si el anterior fue cero). El plan pedía `comparacionMesAnterior: { ingresos, gastos }`: se agregaron los valores absolutos del mes anterior para que el dashboard pueda mostrarlos.
+- `GET /resumen/evolucion?meses=12&hasta=YYYY-MM` (1 a 36 meses, default 12 hasta el mes actual) → por moneda, todos los meses del rango (en cero si no hubo datos) con `ingresos`, `gastos`, `gastosMovimientos`, `gastosTarjeta`, `saldo`.
+- Criterio caja (ARCHITECTURE §5.1, **sigue pendiente de validar con Flor**, decisión #1 de §11): gastos del mes = movimientos GASTO con fecha en el mes + cuotas con `periodoResumen` = mes. Transferencias y pagos de resumen no cuentan.
+- Agregados en SQL: `groupBy` de Prisma (movimientos por moneda × tipo y moneda × categoría, cuotas por moneda) y `$queryRaw` con `GROUP BY` (cuotas × categoría de la compra, serie de evolución por mes). En memoria solo se combinan grupos ya sumados.
+- **Índices**: no hizo falta agregar ninguno. Las consultas filtran por `usuarioId` + rango de `fecha` (índice `movimientos(usuarioId, fecha)`), por `usuarioId` + `categoriaId` + `fecha` (`movimientos(usuarioId, categoriaId, fecha)`) y por `usuarioId` + `periodoResumen` (`cuotas(usuarioId, periodoResumen)`); el join de cuotas con compras va por la PK de `compras_tarjeta`.
+- `porcentaje(parte, total)` y `variacionPorcentual(actual, anterior)` en `@efe/shared/dinero`, con tests.
+- e2e (7 tests) con un set armado a mano y resultados exactos: dos monedas, cuotas del período y de otros períodos, movimientos en los bordes del mes (30/11, 31/10, 01/12), una transferencia y un pago de resumen que no deben contar, datos de otro usuario, mes sin datos, evolución con meses en cero.

@@ -88,6 +88,24 @@ export function dividirEnCuotas(total: string, cantidad: number): string[] {
   return cuotas;
 }
 
+/**
+ * Qué porcentaje es `parte` de `total`, con 2 decimales: porcentaje('700', '1500.50') → "46.65".
+ * null si el total es cero (no hay base para comparar).
+ */
+export function porcentaje(parte: ValorDinero, total: ValorDinero): string | null {
+  if (esCero(total)) return null;
+  return aString2Decimales(dividir(parte, total).times(100));
+}
+
+/**
+ * Variación porcentual de `anterior` a `actual`: variacionPorcentual('700', '500') → "40.00",
+ * variacionPorcentual('400', '500') → "-20.00". null si el anterior es cero.
+ */
+export function variacionPorcentual(actual: ValorDinero, anterior: ValorDinero): string | null {
+  if (esCero(anterior)) return null;
+  return aString2Decimales(dividir(restar(actual, anterior), anterior).times(100));
+}
+
 export interface LadoTransferencia {
   moneda: Moneda;
   monto: ValorDinero;

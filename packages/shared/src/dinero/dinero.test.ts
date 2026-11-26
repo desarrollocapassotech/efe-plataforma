@@ -9,8 +9,10 @@ import {
   esCero,
   formatearMoneda,
   multiplicar,
+  porcentaje,
   restar,
   sumar,
+  variacionPorcentual,
 } from './index';
 
 const sumaCuotas = (cuotas: string[]) => aString2Decimales(sumar(...cuotas));
@@ -117,6 +119,23 @@ describe('dividirEnCuotas', () => {
     expect(() => dividirEnCuotas('100.001', 3)).toThrow(RangeError);
     expect(() => dividirEnCuotas('-100', 3)).toThrow(RangeError);
     expect(() => dividirEnCuotas('abc', 3)).toThrow(RangeError);
+  });
+});
+
+describe('porcentaje y variacionPorcentual', () => {
+  it('porcentaje con 2 decimales, null si el total es cero', () => {
+    expect(porcentaje('700', '1500.50')).toBe('46.65');
+    expect(porcentaje('50.25', '700')).toBe('7.18');
+    expect(porcentaje('0', '100')).toBe('0.00');
+    expect(porcentaje('150', '100')).toBe('150.00');
+    expect(porcentaje('10', '0')).toBeNull();
+  });
+
+  it('variación positiva, negativa, nula y sin base', () => {
+    expect(variacionPorcentual('1500.50', '1000')).toBe('50.05');
+    expect(variacionPorcentual('400', '500')).toBe('-20.00');
+    expect(variacionPorcentual('500', '500')).toBe('0.00');
+    expect(variacionPorcentual('100', '0')).toBeNull();
   });
 });
 

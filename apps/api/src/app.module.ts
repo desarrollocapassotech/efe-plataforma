@@ -16,6 +16,7 @@ import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { MovimientosModule } from './modules/movimientos/movimientos.module';
 import { RecurrenciasModule } from './modules/recurrencias/recurrencias.module';
+import { ResumenModule } from './modules/resumen/resumen.module';
 import { TransferenciasModule } from './modules/transferencias/transferencias.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -55,6 +56,7 @@ import { PrismaModule } from './prisma/prisma.module';
     MovimientosModule,
     TransferenciasModule,
     RecurrenciasModule,
+    ResumenModule,
     JobsModule,
   ],
   providers: [
