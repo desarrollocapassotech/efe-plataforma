@@ -71,5 +71,8 @@
       ]
     },
     "testEnvironment": "node"
+  },
+  "prisma": {
+    "seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON prisma/seed.ts"
   }
 }

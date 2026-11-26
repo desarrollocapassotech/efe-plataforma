@@ -16,7 +16,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 1.1 Scaffold del monorepo
 - [x] 1.2 `packages/shared`: dinero, fechas y features
 - [x] 1.3 Scaffold de la API
-- [ ] 1.4 Schema Prisma del Lanzamiento 1 + seed
+- [x] 1.4 Schema Prisma del Lanzamiento 1 + seed
 - [ ] 1.5 Autenticación, roles y features
 - [ ] 1.6 Scaffold de la web
 - [ ] 1.7 Mover el admin al monorepo
@@ -129,3 +129,13 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - e2e (`pnpm --filter @efe/api test:e2e`) contra la rama `test` de Neon vía `.env.test`. `docker-compose.yml` queda como alternativa (Postgres 18, puerto 5433).
 - Tsconfig de la API: `NodeNext` (CommonJS + respeta `exports` de `@efe/shared`), decoradores, `isolatedModules: false`. ESLint de la API desactiva `consistent-type-imports`: un `import type` de una clase inyectada rompe la DI de Nest.
 - Ojo en esta máquina: la extensión **Console Ninja** de VS Code modifica `@nestjs/core` en `node_modules` y hace que Jest avise "A worker process has failed to exit gracefully". No es del código (no pasa en CI ni con una instalación limpia).
+
+### 1.4 Schema Prisma + seed
+
+- Schema de §5.2 copiado tal cual: `prisma validate` sin errores, no hizo falta corregir nada. Migración `20261126150730_init` aplicada en `develop` (y en `test` por el global setup de los e2e): 17 tablas + `_prisma_migrations`.
+- Para revisar en 5.1: `indicadores` tiene `@@unique([codigo, fecha])` y además `@@index([codigo, fecha(sort: Desc)])`. El índice único ya sirve para leer en orden descendente, así que el segundo sobra (más costo de escritura). Se puede sacar con una migración cuando se implemente el módulo.
+- Plantilla de categorías en `apps/api/src/modules/categorias/plantilla.ts` (13 de gasto, 5 de ingreso). Paleta: azul marino y dorado de EFE + colores categóricos; dentro de cada tipo no se repite color. `categoriasDefaultPara(usuarioId)` la reusa el guard de 1.5.
+- Seed (`pnpm --filter @efe/api prisma db seed`): corre con Node 22 directo (type stripping), sin `tsx`/`ts-node`. Admins por `SEED_ADMIN_FIREBASE_UID` y `SEED_ADMIN_EMAIL` (coma separada, emparejados por posición). Idempotente: si el usuario existe lo actualiza a ADMIN; si no, lo crea con sus categorías default (igual que un registro normal). Corrido dos veces en `develop`: 1 usuario, 18 categorías.
+- Admin cargado en `develop`: Elías (UID y email en `apps/api/.env`, no en el repo). Falta el de Flor.
+- Prisma avisa que `package.json#prisma` (donde está el comando del seed) se depreca en Prisma 7. Se queda así hasta migrar a Prisma 7 (ARCHITECTURE §2).
+- e2e: `test/global-setup.ts` corre `prisma migrate deploy` contra la base de tests antes de empezar. `.env.test` ahora **pisa** las variables del entorno (antes `loadEnvFile` no lo hacía, y un `DATABASE_URL` exportado en la shell podía mandar los e2e a otra base).

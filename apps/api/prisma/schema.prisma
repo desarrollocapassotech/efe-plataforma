@@ -1,5 +1,5 @@
-// Schema de la plataforma EFE. Los modelos del Lanzamiento 1 se agregan en el paso 1.4
-// (docs/ARCHITECTURE.md §5.2).
+// Schema de la plataforma EFE — Lanzamiento 1 (docs/ARCHITECTURE.md §5.2).
+// Los modelos de asesoramiento (§5.3) se agregan recién en la Fase 11.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,4 +9,415 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+enum Rol {
+  USUARIO
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+  ASESORAMIENTO
+}
+
+enum Moneda {
+  ARS
+  USD
+}
+
+enum TipoCuenta {
+  EFECTIVO
+  BANCO
+  BILLETERA
+  INVERSION
+  OTRA
+}
+
+enum TipoMovimiento {
+  INGRESO
+  GASTO
+}
+
+enum Frecuencia {
+  MENSUAL
+  ANUAL
+}
+
+enum RedTarjeta {
+  VISA
+  MASTERCARD
+  AMEX
+  CABAL
+  NARANJA
+  OTRA
+}
+
+enum EstadoObjetivo {
+  ACTIVO
+  CUMPLIDO
+  ARCHIVADO
+}
+
+enum EstadoSuscripcion {
+  PENDIENTE
+  ACTIVA
+  PAUSADA
+  CANCELADA
+  VENCIDA
+}
+
+enum ProveedorPago {
+  MERCADOPAGO
+  MANUAL
+}
+
+model Usuario {
+  id                   String    @id @default(cuid())
+  firebaseUid          String    @unique
+  email                String
+  nombre               String?
+  rol                  Rol       @default(USUARIO)
+  plan                 Plan      @default(FREE)
+  monedaPrincipal      Moneda    @default(ARS)
+  onboardingCompletado Boolean   @default(false)
+  ultimoAccesoEn       DateTime?
+  creadoEn             DateTime  @default(now())
+  actualizadoEn        DateTime  @updatedAt
+  eliminadoEn          DateTime?
+
+  cuentas        Cuenta[]
+  categorias     Categoria[]
+  movimientos    Movimiento[]
+  transferencias Transferencia[]
+  recurrencias   Recurrencia[]
+  tarjetas       Tarjeta[]
+  compras        CompraTarjeta[]
+  cuotas         Cuota[]
+  pagosResumen   PagoResumen[]
+  objetivos      Objetivo[]
+  perfiles       PerfilInversor[]
+  suscripciones  Suscripcion[]
+
+  @@index([email])
+  @@map("usuarios")
+}
+
+model Cuenta {
+  id            String     @id @default(cuid())
+  usuarioId     String
+  nombre        String
+  tipo          TipoCuenta @default(OTRA)
+  moneda        Moneda     @default(ARS)
+  color         String?
+  saldoInicial  Decimal    @default(0) @db.Decimal(18, 2)
+  archivada     Boolean    @default(false)
+  orden         Int        @default(0)
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+
+  usuario               Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  movimientos           Movimiento[]
+  transferenciasSalida  Transferencia[] @relation("TransferenciaOrigen")
+  transferenciasEntrada Transferencia[] @relation("TransferenciaDestino")
+  recurrencias          Recurrencia[]
+  pagosResumen          PagoResumen[]
+
+  @@index([usuarioId])
+  @@map("cuentas")
+}
+
+model Categoria {
+  id            String         @id @default(cuid())
+  usuarioId     String
+  tipo          TipoMovimiento
+  nombre        String
+  color         String
+  icono         String
+  esDefault     Boolean        @default(false)
+  archivada     Boolean        @default(false)
+  orden         Int            @default(0)
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+
+  usuario      Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  movimientos  Movimiento[]
+  recurrencias Recurrencia[]
+  compras      CompraTarjeta[]
+
+  @@unique([usuarioId, tipo, nombre])
+  @@map("categorias")
+}
+
+model Movimiento {
+  id                 String         @id @default(cuid())
+  usuarioId          String
+  cuentaId           String
+  categoriaId        String?
+  tipo               TipoMovimiento
+  monto              Decimal        @db.Decimal(18, 2)
+  moneda             Moneda
+  fecha              DateTime       @db.Date
+  descripcion        String?
+  recurrenciaId      String?
+  periodoRecurrencia String? // YYYY-MM, solo si viene de una recurrencia
+  creadoEn           DateTime       @default(now())
+  actualizadoEn      DateTime       @updatedAt
+
+  usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cuenta      Cuenta       @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  categoria   Categoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  recurrencia Recurrencia? @relation(fields: [recurrenciaId], references: [id], onDelete: SetNull)
+
+  @@unique([recurrenciaId, periodoRecurrencia])
+  @@index([usuarioId, fecha])
+  @@index([usuarioId, categoriaId, fecha])
+  @@index([cuentaId])
+  @@map("movimientos")
+}
+
+model Transferencia {
+  id              String   @id @default(cuid())
+  usuarioId       String
+  cuentaOrigenId  String
+  cuentaDestinoId String
+  montoOrigen     Decimal  @db.Decimal(18, 2)
+  montoDestino    Decimal  @db.Decimal(18, 2)
+  fecha           DateTime @db.Date
+  descripcion     String?
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
+
+  usuario       Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cuentaOrigen  Cuenta  @relation("TransferenciaOrigen", fields: [cuentaOrigenId], references: [id], onDelete: Restrict)
+  cuentaDestino Cuenta  @relation("TransferenciaDestino", fields: [cuentaDestinoId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, fecha])
+  @@map("transferencias")
+}
+
+model Recurrencia {
+  id            String         @id @default(cuid())
+  usuarioId     String
+  cuentaId      String
+  categoriaId   String?
+  tipo          TipoMovimiento
+  monto         Decimal        @db.Decimal(18, 2)
+  moneda        Moneda
+  descripcion   String
+  frecuencia    Frecuencia     @default(MENSUAL)
+  diaDelMes     Int // 1..31, con clamp
+  mesDelAnio    Int? // solo ANUAL
+  desde         DateTime       @db.Date
+  hasta         DateTime?      @db.Date
+  activa        Boolean        @default(true)
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+
+  usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cuenta      Cuenta       @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+  categoria   Categoria?   @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  movimientos Movimiento[]
+
+  @@index([usuarioId])
+  @@map("recurrencias")
+}
+
+model Tarjeta {
+  id             String     @id @default(cuid())
+  usuarioId      String
+  nombre         String
+  red            RedTarjeta @default(OTRA)
+  ultimos4       String?
+  diaCierre      Int // 1..31, con clamp
+  diaVencimiento Int // 1..31, con clamp
+  color          String?
+  archivada      Boolean    @default(false)
+  creadoEn       DateTime   @default(now())
+  actualizadoEn  DateTime   @updatedAt
+
+  usuario Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cierres CierreTarjeta[]
+  compras CompraTarjeta[]
+  cuotas  Cuota[]
+  pagos   PagoResumen[]
+
+  @@index([usuarioId])
+  @@map("tarjetas")
+}
+
+model CierreTarjeta {
+  id               String   @id @default(cuid())
+  tarjetaId        String
+  periodo          String // YYYY-MM del vencimiento
+  fechaCierre      DateTime @db.Date
+  fechaVencimiento DateTime @db.Date
+
+  tarjeta Tarjeta @relation(fields: [tarjetaId], references: [id], onDelete: Cascade)
+
+  @@unique([tarjetaId, periodo])
+  @@map("cierres_tarjeta")
+}
+
+model CompraTarjeta {
+  id             String   @id @default(cuid())
+  usuarioId      String
+  tarjetaId      String
+  categoriaId    String?
+  descripcion    String
+  fecha          DateTime @db.Date
+  montoTotal     Decimal  @db.Decimal(18, 2)
+  moneda         Moneda
+  cantidadCuotas Int      @default(1)
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
+
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tarjeta   Tarjeta    @relation(fields: [tarjetaId], references: [id], onDelete: Restrict)
+  categoria Categoria? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  cuotas    Cuota[]
+
+  @@index([usuarioId, fecha])
+  @@index([tarjetaId])
+  @@map("compras_tarjeta")
+}
+
+model Cuota {
+  id             String  @id @default(cuid())
+  compraId       String
+  usuarioId      String // desnormalizado para consultas por usuario/período
+  tarjetaId      String // desnormalizado
+  numero         Int
+  monto          Decimal @db.Decimal(18, 2)
+  moneda         Moneda
+  periodoResumen String // YYYY-MM
+
+  compra  CompraTarjeta @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  usuario Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tarjeta Tarjeta       @relation(fields: [tarjetaId], references: [id], onDelete: Cascade)
+
+  @@unique([compraId, numero])
+  @@index([usuarioId, periodoResumen])
+  @@index([tarjetaId, periodoResumen])
+  @@map("cuotas")
+}
+
+model PagoResumen {
+  id        String   @id @default(cuid())
+  usuarioId String
+  tarjetaId String
+  cuentaId  String
+  periodo   String // YYYY-MM
+  monto     Decimal  @db.Decimal(18, 2)
+  moneda    Moneda
+  fecha     DateTime @db.Date
+  creadoEn  DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tarjeta Tarjeta @relation(fields: [tarjetaId], references: [id], onDelete: Restrict)
+  cuenta  Cuenta  @relation(fields: [cuentaId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, periodo])
+  @@map("pagos_resumen")
+}
+
+model Objetivo {
+  id                    String         @id @default(cuid())
+  usuarioId             String
+  nombre                String
+  icono                 String?
+  montoObjetivo         Decimal        @db.Decimal(18, 2)
+  moneda                Moneda
+  fechaObjetivo         DateTime?      @db.Date
+  aporteMensualPlaneado Decimal?       @db.Decimal(18, 2)
+  estado                EstadoObjetivo @default(ACTIVO)
+  creadoEn              DateTime       @default(now())
+  actualizadoEn         DateTime       @updatedAt
+
+  usuario Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  aportes AporteObjetivo[]
+
+  @@index([usuarioId])
+  @@map("objetivos")
+}
+
+model AporteObjetivo {
+  id         String   @id @default(cuid())
+  objetivoId String
+  monto      Decimal  @db.Decimal(18, 2) // negativo = retiro
+  fecha      DateTime @db.Date
+  nota       String?
+  creadoEn   DateTime @default(now())
+
+  objetivo Objetivo @relation(fields: [objetivoId], references: [id], onDelete: Cascade)
+
+  @@index([objetivoId, fecha])
+  @@map("aportes_objetivo")
+}
+
+model Indicador {
+  id         String   @id @default(cuid())
+  codigo     String // ver catálogo en sección 7
+  fecha      DateTime @db.Date // fecha a la que corresponde el dato
+  valor      Decimal  @db.Decimal(18, 6)
+  fuente     String
+  urlFuente  String?
+  obtenidoEn DateTime @default(now())
+
+  @@unique([codigo, fecha])
+  @@index([codigo, fecha(sort: Desc)])
+  @@map("indicadores")
+}
+
+model PerfilInversor {
+  id                  String   @id @default(cuid())
+  usuarioId           String
+  versionCuestionario String
+  versionPrompt       String
+  modelo              String
+  respuestas          Json
+  conversacion        Json // preguntas adicionales de la IA y respuestas
+  resultado           Json // perfil, nivel de riesgo, capacidad vs disposición, explicación
+  creadoEn            DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, creadoEn])
+  @@map("perfiles_inversor")
+}
+
+model Suscripcion {
+  id            String            @id @default(cuid())
+  usuarioId     String
+  plan          Plan
+  estado        EstadoSuscripcion @default(PENDIENTE)
+  proveedor     ProveedorPago
+  proveedorId   String? // id de preapproval de Mercado Pago
+  desde         DateTime
+  hasta         DateTime?
+  creadoEn      DateTime          @default(now())
+  actualizadoEn DateTime          @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([proveedor, proveedorId])
+  @@index([usuarioId])
+  @@map("suscripciones")
+}
+
+model Auditoria {
+  id        String   @id @default(cuid())
+  usuarioId String? // sujeto afectado
+  actorId   String? // quién lo hizo (puede ser un admin)
+  accion    String // ej. "cuenta.eliminar", "usuario.exportar", "admin.cambiar_plan"
+  entidad   String
+  entidadId String?
+  datos     Json?
+  ip        String?
+  creadoEn  DateTime @default(now())
+
+  @@index([usuarioId, creadoEn])
+  @@index([accion, creadoEn])
+  @@map("auditoria")
 }
