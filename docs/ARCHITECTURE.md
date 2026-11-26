@@ -149,7 +149,7 @@ El portal admin actual, con su `CLAUDE.md` y design system. Convive en dos fases
 1. **Hasta la Fase 11:** sigue leyendo/escribiendo Firestore para clientes/brokers/planes/servicios y facturando con Faktia. Los módulos nuevos (usuarios de la plataforma, métricas, auditoría, indicadores) consumen la API.
 2. **Fase 11:** clientes/brokers/planes/servicios pasan a Postgres y el admin deja de usar Firestore.
 
-Mensajes e Informes (beta) se eliminan del admin: se rehacen contra la API en el Lanzamiento Asesoramiento.
+Mensajes e Informes (beta) **se conservan** en el admin, ocultos detrás del switch "En desarrollo" (`previewStore`), leyendo Firestore como hasta ahora. Decisión de Elías al hacer el paso 1.7 (nov 2026): no se borran. Se rehacen contra la API en el Lanzamiento Asesoramiento.
 
 ### 3.4 `packages/shared`
 

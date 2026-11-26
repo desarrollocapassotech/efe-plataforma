@@ -19,7 +19,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 1.4 Schema Prisma del Lanzamiento 1 + seed
 - [x] 1.5 Autenticación, roles y features
 - [x] 1.6 Scaffold de la web
-- [ ] 1.7 Mover el admin al monorepo
+- [x] 1.7 Mover el admin al monorepo
 
 ## Fase 2 — Finanzas personales (Módulo 1)
 
@@ -170,3 +170,15 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - PWA: manifest "EFE Capital" con los colores de marca, íconos generados desde `logo-mark.png` (192, 512, maskable con margen, apple-touch, favicon) sin dependencias extra, service worker `autoUpdate` que precachea solo el shell (nunca respuestas de la API). Firebase y React van en chunks propios.
 - Para instalar la PWA en el celular hace falta HTTPS (o localhost): con `vite --host` por IP de la red el navegador no ofrece instalar. Probarlo con un túnel HTTPS o después del deploy (8.3).
 - Falta probar a mano: registro con email y con Google en el navegador (necesita Email/contraseña y Google habilitados en Firebase Auth, paso 0.4).
+
+### 1.7 Mover el admin al monorepo
+
+- Copiado de `efecapital-portal-admin` a `apps/admin` sin `.git`, `node_modules`, `dist`, `.firebase`, `bun.lockb`, `package-lock.json` ni `.env` (sí `.env.example`). Paquete `@efe/admin`, puerto 5174, sin `lovable-tagger`.
+- Versiones unificadas con la web: React Router 7, Firebase 13, TanStack Query 5, lucide-react 1.x, sonner 2, Vite 8 + `@vitejs/plugin-react` (en vez de `plugin-react-swc`), TypeScript 5.9, ESLint 10. Compila sin errores de tipos.
+- Usa `@efe/config`: tsconfig de React, ESLint de React y el preset de Tailwind. Los tokens salieron de su `index.css` (quedan en el preset); el admin conserva `--radius: 0.125rem` y en su `tailwind.config.ts` resuelve `xl`/`2xl`/`3xl` a ese radius, así la UI queda igual.
+- Concesiones al código heredado (Lovable): TypeScript **sin modo estricto** (overrides en su `tsconfig.json`) y las reglas nuevas de `react-hooks` 7 (React Compiler: `set-state-in-effect`, `immutability`, `static-components`, `purity`) en *warning* (20 avisos, sobre todo `ClientForm` y `Billing`). Se corrigen al reescribir esas pantallas contra la API en la Fase 11.
+- **No se borró nada** (decisión de Elías): Mensajes, Informes, notificaciones push, `mockData.ts`, componentes de shadcn sin uso y archivos de Lovable (`README.md`, `App.css`, `placeholder.svg`) quedan como estaban. Mensajes e Informes siguen ocultos detrás del switch "En desarrollo". ARCHITECTURE §3.3 actualizado.
+- `firebase.json` y `.firebaserc` quedaron en `apps/admin`, pero el deploy sigue saliendo del repo viejo hasta la Fase 8 (ahí va un `firebase.json` multi-sitio en la raíz).
+- `apps/admin/CLAUDE.md`: comandos del monorepo, sección "Migración en curso", rutas a Faktia (`../../../../FAKTIA`) y a los logos (`../../../Imagenes`) actualizadas, tokens en el preset.
+- Para correrlo hace falta `apps/admin/.env` con `VITE_FAKTIA_API_URL` y `VITE_FAKTIA_APP_URL` (copiarlo del repo viejo). Falta la prueba manual de login, clientes, facturas y facturación mensual contra Firestore y Faktia.
+- Arreglos de pasos anteriores: la web pasó a `tailwind-merge` 2.x (la 3 es para Tailwind 4) y el test del guard de la API dejó de depender de la hora.
