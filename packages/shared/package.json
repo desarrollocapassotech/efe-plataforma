@@ -19,6 +19,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./categorias": {
+      "import": {
+        "types": "./dist/categorias/index.d.ts",
+        "default": "./dist/categorias/index.js"
+      },
+      "require": {
+        "types": "./dist/categorias/index.d.cts",
+        "default": "./dist/categorias/index.cjs"
+      }
+    },
     "./dinero": {
       "import": {
         "types": "./dist/dinero/index.d.ts",

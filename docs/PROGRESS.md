@@ -27,7 +27,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 2.2 Movimientos y transferencias (API)
 - [x] 2.3 Recurrencias + job
 - [x] 2.4 Resumen mensual y evolución (API)
-- [ ] 2.5 Web: onboarding, cuentas y categorías
+- [x] 2.5 Web: onboarding, cuentas y categorías
 - [ ] 2.6 Web: movimientos y carga rápida
 - [ ] 2.7 Web: dashboard
 
@@ -241,3 +241,22 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - **Índices**: no hizo falta agregar ninguno. Las consultas filtran por `usuarioId` + rango de `fecha` (índice `movimientos(usuarioId, fecha)`), por `usuarioId` + `categoriaId` + `fecha` (`movimientos(usuarioId, categoriaId, fecha)`) y por `usuarioId` + `periodoResumen` (`cuotas(usuarioId, periodoResumen)`); el join de cuotas con compras va por la PK de `compras_tarjeta`.
 - `porcentaje(parte, total)` y `variacionPorcentual(actual, anterior)` en `@efe/shared/dinero`, con tests.
 - e2e (7 tests) con un set armado a mano y resultados exactos: dos monedas, cuotas del período y de otros períodos, movimientos en los bordes del mes (30/11, 31/10, 01/12), una transferencia y un pago de resumen que no deben contar, datos de otro usuario, mes sin datos, evolución con meses en cero.
+
+### 2.5 Web: onboarding, cuentas y categorías
+
+- **Sin wireframes (paso 0.6 sin hacer)**. Guía de Elías: basarse en la app `gastos` pero mucho más simple, **apta para todo público, muy intuitiva, lo más limpia posible y sin tantas opciones**, con los colores del admin de EFE (tokens del preset, azul marino + dorado). Aplicado así:
+  - Acción principal grande y a mano del pulgar; lo secundario (archivar, eliminar, ordenar) escondido en el panel de edición o detrás de un botón.
+  - Lenguaje cotidiano ("¿Dónde tenés tu plata?", "¿Cuánta plata tenías al empezar?"), sin jerga.
+  - Defaults en vez de preguntas: tipo Efectivo, moneda principal, si no elige cuentas se crea "Efectivo".
+  - Crear y editar en un **panel** que en el celular es una hoja desde abajo y en desktop un diálogo (Radix Dialog).
+  - Las cuentas no tienen selector de color (el ícono del tipo alcanza); las categorías sí (paleta cerrada).
+- **Onboarding** (`/onboarding`), 3 pasos con barra de progreso dorada: (1) nombre + moneda principal con dos botones grandes; (2) "¿Dónde tenés tu plata?" con opciones tocables (Efectivo, Banco, Mercado Pago y la otra moneda) — "Saltear" crea Efectivo; si ya tiene cuentas (recargó a mitad), no crea nada; (3) listo → `onboardingCompletado`.
+- **Cuentas** (`/mas/cuentas`): totales por moneda arriba (tarjeta azul), lista con ícono del tipo, nombre, tipo · moneda y saldo actual (rojo si es negativo). Tocar abre el panel de edición (nombre, tipo con íconos, moneda, saldo inicial con `MoneyInput` que admite negativos). Archivar/restaurar/eliminar al pie del panel con confirmación; si la API responde `CUENTA_CON_MOVIMIENTOS`, se ofrece archivar. Archivadas colapsadas al final.
+- **Categorías** (`/mas/categorias`): pestañas Gastos/Ingresos, grilla con emoji sobre círculo de su color, mosaico "Nueva". Modo **Ordenar** con flechas subir/bajar y "Listo" (`PUT /categorias/orden`) — **sin dnd-kit** (una dependencia menos, y las flechas funcionan igual en móvil y desktop). Panel con vista previa, nombre, emoji y color; `CATEGORIA_EN_USO` ofrece archivar; `CATEGORIA_DUPLICADA` muestra el error en el formulario.
+- **"Más"**: lista de accesos (Cuentas, Categorías) con descripción corta + tu cuenta + Cerrar sesión. `Pagina` admite flecha de volver y acción a la derecha.
+- Componentes compartidos: `MoneyInput` (teclado numérico, formato es-AR mientras se escribe, coma decimal y punto final tomado como coma, devuelve el decimal para la API; lógica en `lib/montos.ts` con tests), `CurrencyAmount`, `ColorPicker` (paleta), `EmojiPicker` (54 emojis frecuentes, sin librería), `Panel`, `Confirmacion`, estados `Cargando`/`ErrorCarga`/`Vacio`.
+- `PALETA_CATEGORIAS` pasó a `@efe/shared/categorias` (subpath nuevo): la usan la plantilla de la API y el selector de color de la web. El seed sigue andando (importa `@efe/shared` ya compilado).
+- Dependencias nuevas (web): `@radix-ui/react-dialog` (panel) y `@radix-ui/react-alert-dialog` (confirmaciones): las de shadcn, accesibles (foco, Escape, lector de pantalla).
+- TanStack Query: `['cuentas']` y `['categorias']` traen todo (incluidas archivadas) y la pantalla separa; cada mutación invalida su clave.
+- Tests nuevos: `lib/montos` (7) y `MoneyInput` (3). Total web: 27.
+- Falta probar a mano en el navegador y en el celular (no hay herramienta de navegador en esta sesión).

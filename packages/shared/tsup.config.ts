@@ -5,6 +5,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    'categorias/index': 'src/categorias/index.ts',
     'dinero/index': 'src/dinero/index.ts',
     'fechas/index': 'src/fechas/index.ts',
     'features/index': 'src/features/index.ts',

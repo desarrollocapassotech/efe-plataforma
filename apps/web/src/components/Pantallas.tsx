@@ -1,5 +1,6 @@
-import { AlertTriangle, Loader2, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Loader2, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 /** Pantalla completa de carga (mientras se resuelve la sesión o /me). */
@@ -33,14 +34,30 @@ export function PantallaError({ titulo, mensaje, acciones }: PantallaErrorProps)
 
 interface PaginaProps {
   titulo: string;
+  /** Ruta a la que vuelve la flecha (subpáginas, ej. "Más" → "Cuentas"). */
+  volverA?: string;
+  /** Acción secundaria a la derecha del título. */
+  accion?: ReactNode;
   children?: ReactNode;
 }
 
 /** Encabezado + contenido de una página privada. */
-export function Pagina({ titulo, children }: PaginaProps) {
+export function Pagina({ titulo, volverA, accion, children }: PaginaProps) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 lg:px-8 lg:py-8">
-      <h1 className="text-2xl font-semibold">{titulo}</h1>
+      <div className="flex items-center gap-2">
+        {volverA && (
+          <Link
+            to={volverA}
+            className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Volver"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+        )}
+        <h1 className="flex-1 text-2xl font-semibold">{titulo}</h1>
+        {accion}
+      </div>
       {children}
     </div>
   );

@@ -1,6 +1,9 @@
 // Categorías default que se siembran a cada usuario nuevo (ARCHITECTURE §5.1 "Categorías").
-// Sin imports a propósito: la usan la API (guard de auth, paso 1.5) y prisma/seed.ts,
-// que corre con Node directo (type stripping) fuera del build de Nest.
+// La usan la API (guard de auth) y prisma/seed.ts, que corre con Node directo (type
+// stripping) fuera del build de Nest: por eso solo importa de @efe/shared (ya compilado).
+import { PALETA_CATEGORIAS } from '@efe/shared/categorias';
+
+export { PALETA_CATEGORIAS };
 
 type TipoCategoria = 'GASTO' | 'INGRESO';
 
@@ -11,26 +14,6 @@ export interface CategoriaPlantilla {
   color: string;
   orden: number;
 }
-
-/**
- * Paleta de categorías: el azul marino y el dorado de EFE (en tonos que se leen sobre
- * fondo claro y oscuro), más colores categóricos bien separados entre sí y neutros.
- */
-export const PALETA_CATEGORIAS = {
-  azulEfe: '#2E4A8B',
-  doradoEfe: '#B08900',
-  verde: '#2F9E62',
-  azul: '#3B7DD8',
-  ambar: '#E39B1B',
-  rojo: '#C9404E',
-  violeta: '#7B5CB8',
-  rosa: '#C2569A',
-  turquesa: '#0F8B8D',
-  coral: '#E0673C',
-  marron: '#8D6E4F',
-  pizarra: '#64748B',
-  gris: '#9CA3AF',
-} as const;
 
 const C = PALETA_CATEGORIAS;
 

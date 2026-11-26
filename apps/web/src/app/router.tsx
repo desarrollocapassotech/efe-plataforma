@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RecuperarPage } from '@/features/auth/pages/RecuperarPage';
 import { RegistroPage } from '@/features/auth/pages/RegistroPage';
+import { CategoriasPage } from '@/features/categorias/pages/CategoriasPage';
+import { CuentasPage } from '@/features/cuentas/pages/CuentasPage';
 import { InicioPage } from '@/features/dashboard/pages/InicioPage';
 import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage';
 import { MasPage } from '@/features/perfil/pages/MasPage';
@@ -46,6 +48,8 @@ export const router = createBrowserRouter([
           { path: '/tarjetas', element: <TarjetasPage /> },
           { path: '/objetivos', element: <ObjetivosPage /> },
           { path: '/mas', element: <MasPage /> },
+          { path: '/mas/cuentas', element: <CuentasPage /> },
+          { path: '/mas/categorias', element: <CategoriasPage /> },
         ],
       },
     ],

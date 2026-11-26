@@ -1,4 +1,5 @@
-import { LogOut } from 'lucide-react';
+import { ChevronRight, LogOut, Tags, Wallet, type LucideIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Pagina } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,14 +8,48 @@ import { useMe } from '../hooks';
 
 const NOMBRE_PLAN = { FREE: 'Gratis', PREMIUM: 'Premium', ASESORAMIENTO: 'Asesoramiento' } as const;
 
-// "Más": cuenta y accesos secundarios. Cuentas, categorías, recurrentes y perfil se suman
-// en la fase 2 y en el paso 7.1.
+const OPCIONES: { ruta: string; titulo: string; detalle: string; icono: LucideIcon }[] = [
+  {
+    ruta: '/mas/cuentas',
+    titulo: 'Cuentas',
+    detalle: 'Efectivo, banco, billeteras',
+    icono: Wallet,
+  },
+  {
+    ruta: '/mas/categorias',
+    titulo: 'Categorías',
+    detalle: 'En qué gastás y de dónde entra',
+    icono: Tags,
+  },
+];
+
+// "Más": lo que no se usa todos los días. Recurrentes (2.6) y perfil (7.1) se suman acá.
 export function MasPage() {
   const { logout } = useAuth();
   const { data: me } = useMe();
 
   return (
     <Pagina titulo="Más">
+      <ul className="divide-y overflow-hidden rounded-lg border bg-card">
+        {OPCIONES.map(({ ruta, titulo, detalle, icono: Icono }) => (
+          <li key={ruta}>
+            <Link
+              to={ruta}
+              className="flex items-center gap-4 px-4 py-4 transition hover:bg-accent"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Icono className="h-5 w-5" />
+              </span>
+              <span className="flex-1">
+                <span className="block font-medium">{titulo}</span>
+                <span className="block text-sm text-muted-foreground">{detalle}</span>
+              </span>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+
       <Card>
         <CardContent className="space-y-3 pt-5">
           <p className="eyebrow">Tu cuenta</p>
