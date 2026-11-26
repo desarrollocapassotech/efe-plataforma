@@ -15,6 +15,7 @@ import { CuentasModule } from './modules/cuentas/cuentas.module';
 import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { MovimientosModule } from './modules/movimientos/movimientos.module';
+import { ObjetivosModule } from './modules/objetivos/objetivos.module';
 import { RecurrenciasModule } from './modules/recurrencias/recurrencias.module';
 import { ResumenModule } from './modules/resumen/resumen.module';
 import { TarjetasModule } from './modules/tarjetas/tarjetas.module';
@@ -59,6 +60,7 @@ import { PrismaModule } from './prisma/prisma.module';
     RecurrenciasModule,
     ResumenModule,
     TarjetasModule,
+    ObjetivosModule,
     JobsModule,
   ],
   providers: [

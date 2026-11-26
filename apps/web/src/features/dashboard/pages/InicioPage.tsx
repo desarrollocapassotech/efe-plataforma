@@ -1,8 +1,7 @@
 import type { Moneda } from '@efe/shared/dinero';
 import { hoy, periodoDe } from '@efe/shared/fechas';
-import { Plus, Receipt, Target, type LucideIcon } from 'lucide-react';
+import { Plus, Receipt } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Cargando, ErrorCarga, Vacio } from '@/components/Estados';
 import { MesNavigator } from '@/components/MesNavigator';
 import { Pagina } from '@/components/Pantallas';
@@ -16,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Comparacion } from '../components/Comparacion';
 import { Evolucion } from '../components/Evolucion';
 import { GastosPorCategoria } from '../components/GastosPorCategoria';
+import { ObjetivosInicio } from '../components/ObjetivosInicio';
 import { ResumenDelMes } from '../components/ResumenDelMes';
 import { TarjetasInicio } from '../components/TarjetasInicio';
 import { useEvolucion, useResumenMensual } from '../hooks';
@@ -93,37 +93,7 @@ export function InicioPage() {
 
       <TarjetasInicio moneda={moneda ?? me?.monedaPrincipal ?? 'ARS'} />
 
-      <div>
-        <Proximamente
-          icono={Target}
-          titulo="Objetivos"
-          texto="Tus metas de ahorro"
-          ruta="/objetivos"
-        />
-      </div>
+      <ObjetivosInicio />
     </Pagina>
-  );
-}
-
-function Proximamente({
-  icono: Icono,
-  titulo,
-  texto,
-  ruta,
-}: {
-  icono: LucideIcon;
-  titulo: string;
-  texto: string;
-  ruta: string;
-}) {
-  return (
-    <Link
-      to={ruta}
-      className="space-y-2 rounded-xl border border-dashed px-4 py-3 transition hover:bg-accent"
-    >
-      <Icono className="h-5 w-5 text-muted-foreground" />
-      <span className="block text-sm font-medium">{titulo}</span>
-      <span className="block text-xs text-muted-foreground">{texto} · Muy pronto</span>
-    </Link>
   );
 }

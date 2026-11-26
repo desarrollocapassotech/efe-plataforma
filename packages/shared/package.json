@@ -88,6 +88,16 @@
         "types": "./dist/tarjetas/index.d.cts",
         "default": "./dist/tarjetas/index.cjs"
       }
+    },
+    "./objetivos": {
+      "import": {
+        "types": "./dist/objetivos/index.d.ts",
+        "default": "./dist/objetivos/index.js"
+      },
+      "require": {
+        "types": "./dist/objetivos/index.d.cts",
+        "default": "./dist/objetivos/index.cjs"
+      }
     }
   },
   "files": [

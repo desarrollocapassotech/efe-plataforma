@@ -2,6 +2,7 @@ export * from './base';
 export * from './categorias';
 export * from './cuentas';
 export * from './movimientos';
+export * from './objetivos';
 export * from './paginacion';
 export * from './recurrencias';
 export * from './resumen';

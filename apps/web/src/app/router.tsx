@@ -11,7 +11,8 @@ import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage';
 import { MasPage } from '@/features/perfil/pages/MasPage';
 import { MovimientosPage } from '@/features/movimientos/pages/MovimientosPage';
 import { RecurrentesPage } from '@/features/recurrencias/pages/RecurrentesPage';
-import { ObjetivosPage } from '@/features/secciones';
+import { ObjetivoPage } from '@/features/objetivos/pages/ObjetivoPage';
+import { ObjetivosPage } from '@/features/objetivos/pages/ObjetivosPage';
 import { ComprometidoPage } from '@/features/tarjetas/pages/ComprometidoPage';
 import { ResumenPage } from '@/features/tarjetas/pages/ResumenPage';
 import { TarjetasPage } from '@/features/tarjetas/pages/TarjetasPage';
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
           { path: '/tarjetas/comprometido', element: <ComprometidoPage /> },
           { path: '/tarjetas/:id', element: <ResumenPage /> },
           { path: '/objetivos', element: <ObjetivosPage /> },
+          { path: '/objetivos/:id', element: <ObjetivoPage /> },
           { path: '/mas', element: <MasPage /> },
           { path: '/mas/cuentas', element: <CuentasPage /> },
           { path: '/mas/categorias', element: <CategoriasPage /> },

@@ -39,7 +39,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 4 — Objetivos financieros (Módulo 3)
 
-- [ ] 4.1 Objetivos (shared + API + web)
+- [x] 4.1 Objetivos (shared + API + web)
 
 ## Fase 5 — Indicadores económicos (Módulo 4)
 
@@ -330,3 +330,19 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Los colores de las tarjetas son del usuario (dato que identifica a cada una), de la misma paleta cerrada que las categorías; no pasan por el validador de dataviz (no son una paleta categórica del sistema), por eso el gráfico siempre tiene leyenda y la lista con los números.
 - Tests nuevos (web): vista previa de cuotas (3). Total web: 46.
 - Revisado en Chromium a 360 px con la API simulada (listado, resumen con pagos, comprometido, compra con vista previa). Falta probar contra la API real y en el celular.
+
+### 4.1 Objetivos (shared + API + web)
+
+- **`@efe/shared/objetivos`** (subpath nuevo): `calcularAvance` → `acumulado`, `porcentaje` (0 a 100 con tope), `faltante` (≥ 0), `mesesRestantes`, `aporteMensualSugerido`, `ritmoMensual`, `fechaEstimada`, `enCamino`. Más `mesesHasta`, `resumirAportes` e `inicioRitmo`. 10 tests (en camino / atrasado, planeado vs promedio, sin aportes, cumplido, fecha pasada, retiros que dejan el acumulado negativo, centavos).
+  - **Distinto al plan en la firma**: el plan pedía `calcularAvance({ ..., aportes, ... })`. Recibe `acumulado` y `aportadoUltimosMeses` ya sumados, así la API los calcula con **agregados en SQL** (regla del repo) en vez de traer todos los aportes. `resumirAportes(aportes, hoy)` arma esos dos valores desde una lista (front/tests).
+  - Definiciones que el plan no fijaba (documentadas en ARCHITECTURE §5.1): meses restantes = meses calendario entre el mes actual y el de la fecha objetivo, mínimo 1 si no pasó (0 si pasó; el sugerido es entonces todo lo que falta); ritmo = planeado o lo aportado en el mes actual y los 2 anteriores / 3; fecha estimada = hoy + ⌈faltante / ritmo⌉ meses (mismo día, con clamp); "en camino" sin fecha objetivo = está aportando (ritmo > 0).
+- **API** (`@RequiresFeature('objetivos')`): `GET /objetivos` (activos primero, cada uno con `avance`), `GET /objetivos/:id` (agregado: con el historial de aportes), `POST`, `PATCH /:id`, `DELETE /:id`, `POST /:id/aportes` (monto con signo; negativo = retiro; cero → 400), `DELETE /:id/aportes/:aporteId`. `estado: 'CUMPLIDO'` solo con el 100 % → 422 `OBJETIVO_INCOMPLETO` (no es automático). Cambiar la moneda con aportes → 409 `OBJETIVO_MONEDA_BLOQUEADA`. Archivado no recibe aportes → 422 `OBJETIVO_ARCHIVADO`. Avance con dos `groupBy` (total y últimos meses) por objetivo.
+- e2e `objetivos.e2e-spec.ts` (6 tests): validaciones, aportes y retiros contra el cálculo de shared, cumplido solo al 100 %, borrar aporte, moneda bloqueada, archivado, **aislamiento**. Suite completa: 77 verdes.
+- **Web**:
+  - `/objetivos`: tarjeta por objetivo con ícono, "% · $ juntado de $ meta", barra dorada, "Aportá $ X por mes hasta mayo 2027" o "A este ritmo llegás en julio 2027" y estado en palabras con ícono ("En camino", "Atrasado", "Sin aportes recientes", "Cumplido"). Cumplidos y archivados colapsados.
+  - Alta: primero "¿Para qué querés ahorrar?" con plantillas (Fondo de emergencia 🛟, Viaje ✈️, Auto 🚗, Vivienda 🏠, Proyecto 🚀, Patrimonio 📈, Otro 🎯), después nombre, monto con Pesos/Dólares, fecha opcional y aporte mensual opcional. **Fondo de emergencia**: explicación + "Gastás en promedio $ X por mes" (promedio de los meses cerrados con gastos de los últimos 6, de `/resumen/evolucion`) y botones "3 meses: $ …" / "6 meses: $ …" que completan el monto.
+  - `/objetivos/:id`: tarjeta azul con lo juntado, %, meta y fecha; "¿Cómo venís?" en lenguaje simple (te faltan, cuánto aportar por mes, cuándo llegás a este ritmo); **Aportar** (panel: Pongo plata / Saco plata, monto con el sugerido por defecto, fecha, nota) e historial con eliminar. Editar, marcar cumplido (al 100 %), archivar y eliminar desde el lápiz.
+  - Los aportes **no mueven plata de las cuentas** (son seguimiento, como en el schema): se aclara en el panel.
+  - Inicio: bloque con hasta 3 objetivos activos (o un acceso "¿Para qué querés ahorrar?").
+- Tests nuevos (web): promedio de gastos y fondo sugerido (2). Total web: 48.
+- Revisado en Chromium a 360 px con la API simulada. Falta probar contra la API real y en el celular.

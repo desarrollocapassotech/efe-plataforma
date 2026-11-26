@@ -225,7 +225,7 @@ export const FEATURES_POR_PLAN: Record<Plan, Feature[]> = {
 | Gasto del mes (criterio caja) | Gastos del mes = movimientos de tipo GASTO con fecha en el mes **+** cuotas con `periodoResumen` = mes. A validar con Flor. |
 | Pago de resumen | `PagoResumen` descuenta del saldo de la cuenta, pero **no** es gasto (ya se contaron las cuotas). |
 | Cambio de cierre | Si cambia `diaCierre`/`diaVencimiento` o se carga un `CierreTarjeta`, se recalculan los `periodoResumen` de las cuotas con período ≥ al afectado. |
-| Objetivos | Acumulado = suma de aportes. Aporte sugerido = (objetivo − acumulado) / meses restantes. |
+| Objetivos | Acumulado = suma de aportes (los retiros son aportes negativos). Aporte sugerido = (objetivo − acumulado) / meses restantes (meses calendario hasta la fecha objetivo, mínimo 1). Ritmo = aporte mensual planeado o, si no hay, lo aportado en el mes actual y los 2 anteriores / 3; fecha estimada = cuando se llega con ese ritmo. "En camino" = cumplido, o fecha estimada ≤ fecha objetivo (sin fecha: ritmo > 0). CUMPLIDO se marca a mano al llegar al 100 %. Cálculo en `@efe/shared/objetivos`. |
 | Borrado de cuenta | Soft delete (`eliminadoEn`) + borrado definitivo a los 30 días por job. También se borra el usuario de Firebase. |
 | IDs | `cuid()`. |
 
@@ -803,6 +803,7 @@ Prefijo `/api/v1`. Todos privados salvo indicación.
 | GET/POST | `/tarjetas/pagos` | Pagos de resumen (`?tarjetaId&periodo`) |
 | DELETE | `/tarjetas/pagos/:id` | |
 | GET/POST | `/objetivos` | Con acumulado, avance y aporte sugerido |
+| GET | `/objetivos/:id` | Con el historial de aportes |
 | PATCH/DELETE | `/objetivos/:id` | |
 | POST | `/objetivos/:id/aportes` | |
 | DELETE | `/objetivos/:id/aportes/:aporteId` | |
