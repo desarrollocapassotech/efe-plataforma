@@ -9,8 +9,8 @@ const listaSeparadaPorComas = z.string().transform((v) =>
 
 /**
  * Variables de entorno de la API (docs/ARCHITECTURE.md §10).
- * Las de Firebase y JOBS_SECRET son opcionales hasta los pasos que las usan (1.5 y 2.3),
- * pero en producción son obligatorias desde ya.
+ * - Firebase: obligatoria salvo en tests (los e2e usan tokens de prueba, sin Firebase).
+ * - JOBS_SECRET: opcional hasta el paso 2.3, pero obligatoria en producción desde ya.
  */
 export const EnvSchema = z
   .object({
@@ -33,18 +33,19 @@ export const EnvSchema = z
     SENTRY_DSN: z.url().optional(),
   })
   .superRefine((env, ctx) => {
-    if (env.NODE_ENV !== 'production') return;
-    const obligatoriasEnProduccion = [
-      'FIREBASE_PROJECT_ID',
-      'FIREBASE_CLIENT_EMAIL',
-      'FIREBASE_PRIVATE_KEY',
-      'JOBS_SECRET',
-    ] as const;
-    for (const clave of obligatoriasEnProduccion) {
-      if (!env[clave]) {
-        ctx.addIssue({ code: 'custom', path: [clave], message: 'Obligatoria en producción' });
+    const exigir = (clave: keyof typeof env, mensaje: string) => {
+      if (!env[clave]) ctx.addIssue({ code: 'custom', path: [clave], message: mensaje });
+    };
+    if (env.NODE_ENV !== 'test') {
+      for (const clave of [
+        'FIREBASE_PROJECT_ID',
+        'FIREBASE_CLIENT_EMAIL',
+        'FIREBASE_PRIVATE_KEY',
+      ] as const) {
+        exigir(clave, 'falta definirla (service account de Firebase)');
       }
     }
+    if (env.NODE_ENV === 'production') exigir('JOBS_SECRET', 'Obligatoria en producción');
   });
 
 export type Env = z.infer<typeof EnvSchema>;

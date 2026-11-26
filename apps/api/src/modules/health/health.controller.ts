@@ -1,6 +1,7 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from '../../common/auth/decoradores';
 import type { Response } from 'express';
 import { HealthService, type EstadoHealth } from './health.service';
 
@@ -9,8 +10,8 @@ import { HealthService, type EstadoHealth } from './health.service';
 export class HealthController {
   constructor(private readonly health: HealthService) {}
 
-  // TODO(1.5): marcar con @Public() cuando exista el guard global de auth.
   @Get()
+  @Public()
   @SkipThrottle()
   @ApiOperation({ summary: 'Estado de la API y de la base de datos' })
   async check(@Res({ passthrough: true }) res: Response): Promise<EstadoHealth> {

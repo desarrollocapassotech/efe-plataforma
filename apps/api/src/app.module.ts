@@ -3,11 +3,15 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
+import { AuthModule } from './common/auth/auth.module';
+import { FirebaseAuthGuard } from './common/auth/firebase-auth.guard';
+import { FeatureGuard, RolesGuard } from './common/auth/permisos.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { DecimalInterceptor } from './common/money/decimal.interceptor';
 import { ConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
 import { HealthModule } from './modules/health/health.module';
+import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -37,10 +41,16 @@ import { PrismaModule } from './prisma/prisma.module';
     // 100 requests por minuto por IP (ARCHITECTURE §9). Límites más estrictos por endpoint en 7.1.
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     PrismaModule,
+    AuthModule,
     HealthModule,
+    UsuariosModule,
   ],
   providers: [
+    // Orden: rate limit → autenticación → rol → feature del plan.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: FirebaseAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: FeatureGuard },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: DecimalInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

@@ -1,9 +1,15 @@
 import { validarEnv } from './env';
 
-const BASE = {
+const DB = {
   DATABASE_URL: 'postgresql://u:p@host-pooler/db?sslmode=require',
   DIRECT_URL: 'postgresql://u:p@host/db?sslmode=require',
 };
+const FIREBASE = {
+  FIREBASE_PROJECT_ID: 'efecapitaladmin',
+  FIREBASE_CLIENT_EMAIL: 'sa@efecapitaladmin.iam.gserviceaccount.com',
+  FIREBASE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----\\n',
+};
+const BASE = { ...DB, ...FIREBASE };
 
 describe('validarEnv', () => {
   it('aplica defaults en desarrollo', () => {
@@ -14,7 +20,7 @@ describe('validarEnv', () => {
   });
 
   it('sin DATABASE_URL falla diciendo qué falta', () => {
-    expect(() => validarEnv({ DIRECT_URL: BASE.DIRECT_URL })).toThrow(
+    expect(() => validarEnv({ ...FIREBASE, DIRECT_URL: DB.DIRECT_URL })).toThrow(
       /DATABASE_URL: falta definirla/,
     );
   });
@@ -41,9 +47,19 @@ describe('validarEnv', () => {
     expect(env.CORS_ORIGINS).toEqual(['https://a.com', 'https://b.com']);
   });
 
-  it('en producción exige Firebase y JOBS_SECRET', () => {
+  it('fuera de tests exige la service account de Firebase', () => {
+    expect(() => validarEnv({ ...DB })).toThrow(
+      /FIREBASE_PROJECT_ID[\s\S]*FIREBASE_CLIENT_EMAIL[\s\S]*FIREBASE_PRIVATE_KEY/,
+    );
+  });
+
+  it('en tests no exige Firebase', () => {
+    expect(validarEnv({ ...DB, NODE_ENV: 'test' }).NODE_ENV).toBe('test');
+  });
+
+  it('en producción exige JOBS_SECRET', () => {
     expect(() => validarEnv({ ...BASE, NODE_ENV: 'production' })).toThrow(
-      /FIREBASE_PROJECT_ID: Obligatoria en producción[\s\S]*JOBS_SECRET: Obligatoria en producción/,
+      /JOBS_SECRET: Obligatoria en producción/,
     );
   });
 });

@@ -10,7 +10,15 @@ import { validarEnv } from './config/env';
 
 async function bootstrap(): Promise<void> {
   // Antes de crear la app: si el entorno es inválido, solo el mensaje claro, sin stack de Nest.
-  validarEnv();
+  const env = validarEnv();
+  // Con NODE_ENV=test la API acepta tokens falsos ("test:<uid>:<email>"). Eso es solo para
+  // los e2e, que levantan la app con @nestjs/testing y nunca pasan por acá: un servidor
+  // real (main.ts) se niega a arrancar en modo test.
+  if (env.NODE_ENV === 'test') {
+    throw new Error(
+      'NODE_ENV=test es solo para tests automatizados: la API no arranca en ese modo.',
+    );
+  }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
   configurarApp(app);

@@ -17,7 +17,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 1.2 `packages/shared`: dinero, fechas y features
 - [x] 1.3 Scaffold de la API
 - [x] 1.4 Schema Prisma del Lanzamiento 1 + seed
-- [ ] 1.5 Autenticación, roles y features
+- [x] 1.5 Autenticación, roles y features
 - [ ] 1.6 Scaffold de la web
 - [ ] 1.7 Mover el admin al monorepo
 
@@ -139,3 +139,17 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Admin cargado en `develop`: Elías (UID y email en `apps/api/.env`, no en el repo). Falta el de Flor.
 - Prisma avisa que `package.json#prisma` (donde está el comando del seed) se depreca en Prisma 7. Se queda así hasta migrar a Prisma 7 (ARCHITECTURE §2).
 - e2e: `test/global-setup.ts` corre `prisma migrate deploy` contra la base de tests antes de empezar. `.env.test` ahora **pisa** las variables del entorno (antes `loadEnvFile` no lo hacía, y un `DATABASE_URL` exportado en la shell podía mandar los e2e a otra base).
+
+### 1.5 Autenticación, roles y features
+
+- `firebase-admin` 14 (verificación de ID tokens, ARCHITECTURE §4). Depende de `jose` (solo ESM): Node 22 lo carga, Jest no. Por eso `VerificadorFirebase` vive en su propio archivo y se carga con `import()` dinámico solo fuera de tests.
+- Guards globales en orden: throttler → `FirebaseAuthGuard` → `RolesGuard` → `FeatureGuard`. Todo es privado salvo `@Public()` (por ahora solo `/health`).
+- Códigos de error: `NO_AUTENTICADO` (sin token), `TOKEN_INVALIDO` (token malo o vencido), `TOKEN_SIN_EMAIL` (usuario nuevo sin email en Firebase), `CUENTA_ELIMINADA` (403), `PROHIBIDO` (rol), `FEATURE_NO_INCLUIDA` (403, con `details.feature`).
+- Usuario nuevo: se crea en una transacción con sus 18 categorías default. Si dos requests del mismo usuario nuevo llegan juntos, el segundo choca con el unique de `firebaseUid` (P2002) y lee el que creó el primero.
+- `ultimoAccesoEn` se actualiza como máximo una vez por hora. Decisión agregada: si el email del token cambió en Firebase, se sincroniza en `Usuario.email`.
+- Tokens de prueba `test:<uid>:<email>`: solo con `NODE_ENV=test`. `main.ts` se niega a arrancar con `NODE_ENV=test`, así que un servidor real nunca los acepta (verificado: el server real responde 401 a un token de prueba).
+- Firebase ahora es obligatorio en el entorno salvo en tests.
+- `GET /me` → usuario + `features` del plan. `PATCH /me` → `nombre`, `monedaPrincipal`, `onboardingCompletado` (`ActualizarMeSchema` en `@efe/shared/schemas`, estricto: rechaza `rol`, `plan` o cualquier otro campo). `MeSchema` también en shared para el front.
+- Verificado con un ID token real: custom token del UID de Elías con la service account, canjeado en la REST API de Firebase (`signInWithCustomToken`) y usado contra la API compilada (conectada a `develop`).
+- Tests: unit del guard, la sesión y los guards de permisos (11); e2e de auth y `/me` (9), con un controller de prueba definido solo en el test para `@Roles` y `@RequiresFeature`. Los usuarios de los e2e usan UIDs únicos por corrida y se borran al final.
+- Admins en `develop`: Elías y Flor (seed).
