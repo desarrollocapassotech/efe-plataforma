@@ -10,7 +10,10 @@
     "./tsconfig/react.json": "./tsconfig/react.json",
     "./eslint": "./eslint/base.js",
     "./eslint/react": "./eslint/react.js",
-    "./tailwind": "./tailwind/preset.js"
+    "./tailwind": {
+      "types": "./tailwind/preset.d.ts",
+      "default": "./tailwind/preset.js"
+    }
   },
   "scripts": {
     "lint": "eslint ."
@@ -20,19 +23,21 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
-    "typescript-eslint": "^8.74.0"
+    "typescript-eslint": "^8.74.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "peerDependencies": {
     "eslint": "^10.0.0",
     "tailwindcss": "^3.4.0",
     "typescript": ">=5.5 <6.1"
   },
+  "devDependencies": {
+    "eslint": "^10.15.0",
+    "tailwindcss": "^3.4.19"
+  },
   "peerDependenciesMeta": {
     "tailwindcss": {
       "optional": true
     }
-  },
-  "devDependencies": {
-    "eslint": "^10.15.0"
   }
 }

@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Los tokens de color, fuentes, .brand-bar y .eyebrow vienen del preset de @efe/config.
+   Acá solo lo propio de la web. */
+@layer base {
+  :root {
+    /* Más redondeada que el admin (2px): la web es B2C. */
+    --radius: 0.625rem;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Montos: cifras alineadas. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}

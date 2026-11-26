@@ -18,7 +18,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - [x] 1.3 Scaffold de la API
 - [x] 1.4 Schema Prisma del Lanzamiento 1 + seed
 - [x] 1.5 Autenticación, roles y features
-- [ ] 1.6 Scaffold de la web
+- [x] 1.6 Scaffold de la web
 - [ ] 1.7 Mover el admin al monorepo
 
 ## Fase 2 — Finanzas personales (Módulo 1)
@@ -153,3 +153,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Verificado con un ID token real: custom token del UID de Elías con la service account, canjeado en la REST API de Firebase (`signInWithCustomToken`) y usado contra la API compilada (conectada a `develop`).
 - Tests: unit del guard, la sesión y los guards de permisos (11); e2e de auth y `/me` (9), con un controller de prueba definido solo en el test para `@Roles` y `@RequiresFeature`. Los usuarios de los e2e usan UIDs únicos por corrida y se borran al final.
 - Admins en `develop`: Elías y Flor (seed).
+
+### 1.6 Scaffold de la web
+
+- Stack: Vite 8, React 18.3 (lo que pide la arquitectura), React Router 7 (`react-router-dom`), TanStack Query 5, Firebase 13, Tailwind 3.4 + shadcn/ui (componentes escritos a mano en `src/components/ui`: button, input, label, card, sonner), react-hook-form + zod 4, `vite-plugin-pwa` 2. Tests con Vitest + Testing Library + jsdom.
+- Dependencias nuevas y para qué: `firebase` (auth cliente), `@tanstack/react-query` (estado del servidor), `react-router-dom` (rutas), `react-hook-form` + `@hookform/resolvers` (formularios con los schemas zod), `@radix-ui/react-slot`/`react-label` + `class-variance-authority` + `clsx` + `tailwind-merge` (base de shadcn/ui), `lucide-react` (íconos, como el admin), `sonner` (toasts), `tailwindcss-animate` (animaciones de shadcn, en el preset).
+- **Preset de Tailwind** (`packages/config/tailwind`): además de colores, fuentes y radius, define las variables CSS de los tokens (claro y `.dark`), `.brand-bar` y `.eyebrow` con un plugin. Así web y admin comparten los valores y cada app pone solo su `--radius` (web: `0.625rem`; admin seguirá con 2px). En 1.7 el admin tiene que sacar esas variables de su `index.css` y usar el preset.
+- **Firebase**: por ahora usa la Web app del admin (`.env.local`, no versionado). Pendiente del paso 0.4: registrar "EFE Web" y cambiar `VITE_FIREBASE_APP_ID`.
+- Login con Google: popup en desktop, redirect en móvil (como pide el plan). Ojo: el redirect necesita que el `authDomain` sea del mismo sitio que la app en navegadores que bloquean cookies de terceros (Safari, Chrome nuevo). En producción hay que resolverlo con el dominio de auth propio (pendiente cosmético de ARCHITECTURE §2) o pasando a popup también en móvil.
+- Al registrarse se manda el email de verificación de Firebase (no bloquea el uso).
+- `apiClient` (`src/lib/api-client.ts`): agrega el ID token, convierte `{ error: { code, message } }` en `ApiError`, reintenta una vez con el token refrescado si la API responde 401, y da `SIN_CONEXION` si no hay red. Tests unitarios.
+- QueryClient: `staleTime` 30 s, sin reintentos en 4xx, mutaciones sin reintentos. El cache se vacía en el logout y cuando cambia el usuario de Firebase.
+- Rutas: públicas `/login`, `/registro`, `/recuperar` (si hay sesión, redirigen a la app); privadas bajo `RequiereSesion`, que carga `/me` (crea el usuario la primera vez) y manda a `/onboarding` si no está completo. Cuenta eliminada → pantalla propia (la restauración llega en 7.1). Error de API → pantalla con Reintentar y Cerrar sesión.
+- `/onboarding` es provisorio: un botón "Empezar" marca `onboardingCompletado` para poder entrar. El onboarding real es el paso 2.5.
+- Layout: móvil con barra superior azul (logo blanco + barra dorada) y navegación inferior fija (Inicio, Movimientos, Tarjetas, Objetivos, Más), con safe areas de iOS; desktop con sidebar azul y el ítem activo marcado en dorado, como el admin. "Más" tiene la cuenta, el plan y Cerrar sesión.
+- PWA: manifest "EFE Capital" con los colores de marca, íconos generados desde `logo-mark.png` (192, 512, maskable con margen, apple-touch, favicon) sin dependencias extra, service worker `autoUpdate` que precachea solo el shell (nunca respuestas de la API). Firebase y React van en chunks propios.
+- Para instalar la PWA en el celular hace falta HTTPS (o localhost): con `vite --host` por IP de la red el navegador no ofrece instalar. Probarlo con un túnel HTTPS o después del deploy (8.3).
+- Falta probar a mano: registro con email y con Google en el navegador (necesita Email/contraseña y Google habilitados en Firebase Auth, paso 0.4).
