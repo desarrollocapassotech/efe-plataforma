@@ -43,6 +43,9 @@ function prismaFalso() {
     },
     $transaction: jest.fn((fn: (t: typeof tx) => unknown) => fn(tx)),
   };
+  // El guard usa la hora real: según cuándo corra el test puede actualizar ultimoAccesoEn.
+  // Que el update siempre devuelva un usuario hace al test independiente de la hora.
+  prisma.usuario.update.mockResolvedValue(usuario());
   return { prisma, tx };
 }
 

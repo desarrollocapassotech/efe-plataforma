@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Los tokens de color (claro y oscuro), las fuentes, .brand-bar y .eyebrow vienen del preset
+   compartido de @efe/config (packages/config/tailwind/preset.js). Acá solo lo propio del admin. */
+@layer base {
+  :root {
+    /* El admin es cuadrado: 2px. */
+    --radius: 0.125rem;
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "@efe/config/tsconfig/react.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
+    "types": ["vite/client", "node"],
+    // El admin heredado (Lovable) se escribió sin modo estricto. Se relaja acá para moverlo
+    // sin reescribirlo; activarlo de a poco queda pendiente (ver docs/PROGRESS.md, paso 1.7).
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitReturns": false,
+    "noImplicitOverride": false,
+    "noFallthroughCasesInSwitch": false
+  },
+  "include": ["src", "vite.config.ts", "tailwind.config.ts"]
+}
