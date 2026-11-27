@@ -346,3 +346,55 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
   - Inicio: bloque con hasta 3 objetivos activos (o un acceso "¿Para qué querés ahorrar?").
 - Tests nuevos (web): promedio de gastos y fondo sugerido (2). Total web: 48.
 - Revisado en Chromium a 360 px con la API simulada. Falta probar contra la API real y en el celular.
+
+### 5.1 Fuentes e ingesta (solo investigación)
+
+- Propuesta de fuentes en `docs/fuentes-indicadores.md`: DolarApi para el oficial, el MEP y el CCL; Series de Tiempo de datos.gob.ar (INDEC) para el IPC, con ArgentinaDatos de respaldo y para el histórico inicial. Incluye endpoints, formato, límites (DolarApi pide como máximo una consulta cada 3 horas por serie), términos (cita obligatoria; el uso comercial no está explícito) y 4 preguntas para confirmar.
+- **No se implementó la ingesta**: el plan pide que Elías confirme las fuentes primero. El paso queda sin marcar.
+- La red de la sesión bloqueaba los hosts de las tres fuentes. Lo verificado sale de sus repos de GitHub; el resto (rutas exactas, formato del JSON, ID de la serie del IPC) está marcado "a verificar" y tiene los `curl` para correr en local.
+
+---
+
+## Para revisar en local (sesión remota del 26–27/11/2026)
+
+### Pasos hechos
+- 2.6 Web: movimientos, carga rápida, transferencias y recurrentes.
+- 2.7 Web: dashboard.
+- 3.1 Cálculos de tarjeta en shared (los tests se commitearon primero, solos).
+- 3.2 API de tarjetas, compras, resúmenes, compromisos y pagos.
+- 3.3 Web: tarjetas.
+- 4.1 Objetivos (shared + API + web).
+- 5.1: solo la investigación de fuentes (`docs/fuentes-indicadores.md`), sin implementar.
+
+Todo está en `main`, un commit (o dos en el 3.1) por paso.
+
+### Decisiones que tomé sin poder consultar
+- **Carga rápida**: "se repite todos los meses" se habilitó también para gastos, no solo para ingresos. Transferencias y "Fue con tarjeta de crédito" quedaron como links secundarios dentro del mismo panel del "+". El botón Guardar queda fijo al pie del panel.
+- **Movimientos**: los filtros y el mes viven en la URL (el dashboard linkea a la lista filtrada). En la lista se mezclan las transferencias del mes.
+- **Dashboard**: las 4 tarjetas del plan (ingresos, gastos, saldo, % gastado) quedaron en **una** tarjeta con jerarquía. Las categorías se muestran como barras ordenadas en vez de donut. No hay conversión entre monedas: se elige cuál ver (decisión #2 sigue abierta).
+- **Tokens nuevos** en el preset: `--chart-ingresos` y `--chart-gastos` (azul y dorado de EFE más brillantes, validados para daltonismo y contraste).
+- **Dependencia nueva**: `recharts` 3 en la web, cargada lazy.
+- **Overrides de cierre**: se aplican **por período** (la clave del schema), no "por mes de cierre" como decía el plan. Está en ARCHITECTURE §5.1.
+- **Recálculo de cuotas** al cambiar el cierre o el vencimiento: desde el próximo resumen a pagar (los vencidos no se tocan). Se agregó `DELETE /tarjetas/:id/cierres/:periodo` para volver a las fechas calculadas.
+- `GET /tarjetas/resumen` devuelve **una lista** (un resumen por tarjeta, cada una con su próximo período). Compromisos no descuenta pagos parciales.
+- **Objetivos**: `calcularAvance` recibe sumas ya hechas (agregados en SQL) en vez de la lista de aportes. Definí meses restantes, ritmo (últimos 3 meses), fecha estimada y "en camino" (está en ARCHITECTURE §5.1). Los aportes no mueven plata de las cuentas. Agregué `GET /objetivos/:id` con el historial.
+- **Fondo de emergencia**: el monto sugerido son 3 o 6 meses del promedio de gastos de los meses cerrados (últimos 6).
+- La vista previa de cuotas en el front no conoce las fechas corregidas a mano (la API sí las usa al guardar).
+
+### Tests
+- Todos corrieron: `pnpm turbo lint typecheck test build` y `pnpm format:check` en verde. El lint del admin sigue con sus 20 warnings heredados.
+- **Los e2e corrieron contra un Postgres 16 local de la sesión** (no contra Neon): 77 tests, 10 suites, todos verdes. El `apps/api/.env.test` de esa sesión apuntaba a la base local y no se commiteó. Conviene correrlos una vez más contra la rama `test` de Neon: `pnpm --filter @efe/api test:e2e`.
+- Unit: shared 144, web 48, API sin cambios.
+
+### Migraciones
+- **Ninguna nueva.** Los modelos de tarjetas, cuotas, pagos y objetivos ya estaban en el schema.
+
+### Qué probar a mano (navegador y celular)
+No había navegador contra la API real. Lo visual se revisó en Chromium a 360 px con una API simulada.
+1. **Carga rápida**: tocar "+", escribir un monto, elegir categoría y Guardar. Tiene que aparecer al instante en Movimientos. Probar que recuerde la última cuenta, Hoy/Ayer/Otro día y "Se repite todos los meses" (crea el recurrente y el movimiento del mes). En el celular: que el teclado numérico no tape el botón Guardar.
+2. **Movimientos**: cambiar de mes, filtros (chips para quitar), scroll infinito con más de 50 movimientos, editar y eliminar, transferencia entre pesos y dólares (cotización implícita).
+3. **Recurrentes** (Más → Recurrentes): alta mensual y anual, pausar/reanudar, eliminar.
+4. **Inicio**: tarjeta del mes con el medidor, categorías (tocar una lleva a Movimientos filtrado), comparación, gráfico de 12 meses (tooltip y tocar un mes), Pesos/Dólares si hay datos en las dos monedas.
+5. **Tarjetas**: alta con día de cierre y de vencimiento. Compra en cuotas desde "+" → "Fue con tarjeta de crédito": revisar la vista previa del resumen y el modo "Puse cada cuota". Detalle del resumen: navegar períodos, corregir fechas (las cuotas se mueven) y volver a las de siempre, registrar un pago (el saldo de la cuenta baja; el gasto del mes no cambia), eliminar el pago. Abrir Comprometido.
+6. **Objetivos**: plantilla "Fondo de emergencia" (sugerencia de 3 y 6 meses si hay meses de gastos cargados), aportar y retirar, marcar cumplido al 100 %, archivar. Bloque de objetivos en el Inicio.
+7. **Fuentes de indicadores**: correr los `curl` de `docs/fuentes-indicadores.md` §6 y responder las 4 preguntas de §5 antes del paso 5.1.
