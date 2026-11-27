@@ -765,7 +765,12 @@ model MontoSuscripcion {
 
 - **Etapa 2 — Contenido:** `Informe` (título, slug, categoría, cuerpo en Markdown/JSON de editor, nivel de acceso por feature, publicado/borrador, fecha), `RecursoEducativo`, `ResumenMercado`. Editor en el admin. Informes públicos → evaluar SSR (Astro/Next) para SEO.
 - **Etapa 3 — Inversiones:** `CarteraModelo` + `VersionCartera` + `ComponenteCartera` (instrumento, %), `Emisor`, `ObligacionNegociable`, `FlujoON` (fecha, interés, amortización), `PrecioInstrumento` (serie temporal), `CalificacionCrediticia`, `ClasificacionEmisor` (verde/amarillo/rojo + criterio + fecha), `PosicionUsuario`, `Alerta`. Cálculos (TIR, duration, paridad) en `packages/shared`.
-  - **Requisito (pedido de Flor, nov 2026): avisos de vencimientos de ON**, como mínimo para las administradoras en el admin. Se arma con lo que ya está previsto: `FlujoON` (fechas de pago) + `Alerta` + un job diario `vencimientos-on` (§8). Propuesta a confirmar: vencimiento = cada fecha de `FlujoON` (renta y amortización), no solo la amortización final; aviso 7 días antes y el mismo día; canal: notificación dentro del admin (campana con badge y listado "Próximos vencimientos") + email a los usuarios con rol `ADMIN`; push del navegador como opcional, reusando lo que ya tiene el admin (`apps/admin/NOTIFICACIONES_PUSH.md`). Ampliable después a los usuarios con la feature de inversiones (vencimientos de las ON de su cartera).
+  - **Requisito definido por Flor (nov 2026): avisos de vencimientos de ON en el admin.**
+    - **Qué se avisa:** cada pago de la ON (renta y amortización), es decir, cada fila de `FlujoON`.
+    - **Cuándo:** el mismo día del pago. Un job diario `vencimientos-on` (§8) genera las `Alerta` del día.
+    - **Dónde:** solo dentro del admin: campana con contador y listado "Vencimientos de hoy" (y los próximos, para consultar), para los usuarios con rol `ADMIN`. Sin email ni push por ahora.
+    - **De qué ON:** solo las que están en la cartera de algún cliente de asesoramiento. Hace falta registrar las tenencias por cliente: un modelo nuevo de la Etapa 3, del tipo `TenenciaCliente` (`ClienteAsesoramiento` × `ObligacionNegociable`, con el valor nominal), que depende de que los clientes ya estén en Postgres (Fase 11). Cada aviso dice la ON, el tipo de pago y qué clientes la tienen.
+    - Pendiente de definir al diseñar la Etapa 3: si la cartera del cliente se carga a mano en el admin o se toma de la cartera modelo asignada.
 - **Etapa 4 — Acciones:** `Empresa`, `Cotizacion`, `RatioHistorico`, `PrecioObjetivo` (de terceros, separado de valuaciones propias).
 - **Etapa 5 — IA:** `Conversacion`, `MensajeIA`, embeddings de contenido con pgvector.
 
@@ -940,4 +945,3 @@ VITE_SENTRY_DSN
 | 7 | Dominio | Ambos |
 | 8 | Proveedor de IA para L1.5 | Elías |
 | 9 | Fuentes de datos de ON y su costo (antes de la Etapa 3) | Elías |
-| 10 | Avisos de vencimientos de ON (Etapa 3): qué cuenta como vencimiento (cada pago o solo el final), con cuánta anticipación, por qué canal (admin, email, push) y de qué ON (todas las cargadas o solo las de carteras/clientes) | Flor |
