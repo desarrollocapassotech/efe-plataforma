@@ -817,7 +817,7 @@ Prefijo `/api/v1`. Todos privados salvo indicación.
 | GET | `/resumen/evolucion` | `?meses=12` → ingresos y gastos por mes y moneda |
 | GET | `/indicadores` | Público. Último valor de cada indicador + fecha + fuente + brecha calculada |
 | GET | `/indicadores/:codigo/historico` | Público. `?desde&hasta` |
-| POST | `/internal/jobs/:job` | Header `X-Jobs-Secret`. Jobs: `indicadores`, `recurrencias`, `purgar-cuentas` |
+| POST | `/internal/jobs/:job` | Header `X-Jobs-Secret`. Jobs: `indicadores`, `indicadores-historico`, `recurrencias`, `purgar-cuentas` |
 | GET | `/admin/usuarios` | ADMIN. Filtros, paginado |
 | PATCH | `/admin/usuarios/:id/plan` | ADMIN. Cambio manual de plan (auditado) |
 | GET | `/admin/metricas` | ADMIN. Registros por día, activos 7/30 días, movimientos cargados, retención simple |
@@ -830,19 +830,27 @@ Paginación por cursor: `{ items, nextCursor }`. Swagger en `/api/docs` (solo fu
 
 ## 7. Datos externos
 
-| Indicador (`codigo`) | Fuente a validar | Frecuencia |
-|---|---|---|
-| `DOLAR_OFICIAL_COMPRA`, `DOLAR_OFICIAL_VENTA` | DolarApi / BCRA | Cada hora en horario de mercado |
-| `DOLAR_MEP_COMPRA`, `DOLAR_MEP_VENTA` | DolarApi | Cada hora en horario de mercado |
-| `DOLAR_CCL_COMPRA`, `DOLAR_CCL_VENTA` | DolarApi | Cada hora en horario de mercado |
-| `IPC_MENSUAL` | ArgentinaDatos / API de series de datos.gob.ar (INDEC) | Diario (publica 1 vez por mes) |
-| Brecha | Calculada: MEP venta / oficial venta − 1 | Al consultar |
-| IPC acumulado del año | Calculado: producto de (1 + IPC mensual) − 1 | Al consultar |
+Fuentes confirmadas por Elías (nov 2026). Investigación y condiciones en `docs/fuentes-indicadores.md`.
 
-Implementación:
-- Interfaz `ProveedorIndicadores { obtener(): Promise<ValorIndicador[]> }`, un adaptador por fuente.
-- El job hace upsert por `(codigo, fecha)`. Si una fuente falla, se loguea en Sentry y se mantiene el último valor; el front muestra la fecha del dato.
-- Antes de usar una fuente en producción: revisar términos de uso comercial, límites y estabilidad. Documentar el resultado en esta sección.
+| Indicador (`codigo`) | Fuente | Respaldo | Frecuencia |
+|---|---|---|---|
+| `DOLAR_OFICIAL_COMPRA/VENTA`, `DOLAR_MEP_COMPRA/VENTA`, `DOLAR_CCL_COMPRA/VENTA` | DolarApi `GET https://dolarapi.com/v1/dolares` (casas `oficial`, `bolsa`, `contadoconliqui`), una sola llamada | — (si falla se conserva el último valor) | Cada 3 h en días hábiles |
+| `IPC_MENSUAL` | API de Series de Tiempo de datos.gob.ar (INDEC): `148.3_INIVELNAL_DICI_M_26:percent_change` | ArgentinaDatos `GET /v1/finanzas/indices/inflacion` | Con el mismo job (un request por corrida) |
+| Histórico inicial | ArgentinaDatos `/v1/cotizaciones/dolares/{casa}` (90 días) + Series de Tiempo (25 meses) | — | Una vez: job `indicadores-historico` |
+| Brecha MEP / CCL | Calculada con `brecha()` de `@efe/shared/indicadores`: venta / oficial venta − 1 | — | Al consultar |
+| IPC acumulado del año | Calculado con `ipcAcumulado()`: producto de (1 + IPC mensual) − 1, de enero al último mes | — | Al consultar |
+
+Convenciones:
+- **Valores** en `Decimal(18, 6)`. El IPC se guarda **en %** (2,7 y no 0,027). La serie de datos.gob.ar viene en fracción y se multiplica por 100.
+- **Fecha del dato:** para los dólares, el día en Argentina de `fechaActualizacion`. Para el IPC, el primer día del mes. Un valor por `(codigo, fecha)`: si una fuente lo trae dos veces en el día, queda el último.
+- **Fuente guardada:** "DolarApi (dolarhoy.com)", "INDEC vía datos.gob.ar", "ArgentinaDatos" o "Carga manual EFE", con `urlFuente`. La web la muestra con la fecha del dato. DolarApi exige citarla.
+- **Correcciones manuales** (`PUT /admin/indicadores`): quedan con fuente "Carga manual EFE", se registran en `auditoria` y **la ingesta no las pisa**.
+- **Condiciones de DolarApi:** como máximo una consulta cada 3 horas por serie, uso con cita obligatoria y sin autorización comercial explícita. Antes del lanzamiento público conviene confirmarlo con el autor.
+
+Implementación (`apps/api/src/modules/indicadores`):
+- Interfaz `ProveedorIndicadores { obtener(): Promise<ValorExterno[]> }`, un adaptador por fuente. `ClienteHttp` aplica un timeout de 10 s y valida la respuesta con zod: si el formato cambia, falla de forma explícita (`ErrorFuente`). `ProveedorConRespaldo` usa la fuente de respaldo solo si la principal falla, así no se mezclan dos fuentes en una misma corrida.
+- `ingestar()` corre los proveedores con `Promise.allSettled`, guarda por `(codigo, fecha)`, loguea el resultado y reporta las fallas al logger (Sentry cuando se configure en la Fase 8). Si una fuente falla, se mantiene el último valor.
+- `GET /indicadores` y `GET /indicadores/:codigo/historico` son públicos, con cache en memoria de 5 minutos que se invalida en cada ingesta o corrección.
 
 Etapas 3/4 (ON, precios, acciones): a investigar costos y licencias (BYMA, APIs de brokers, proveedores internacionales, TradingView). Es la decisión que más afecta el costo del producto.
 
@@ -854,7 +862,8 @@ Disparados por **GitHub Actions `schedule`** llamando a `POST /api/v1/internal/j
 
 | Job | Frecuencia |
 |---|---|
-| `indicadores` | Cada hora, lunes a viernes 10–18 h (ART), más 1 vez diaria |
+| `indicadores` | Cada 3 h, lunes a viernes de 10 a 19 h ART (10, 13, 16 y 19 h), respetando el límite de DolarApi |
+| `indicadores-historico` | Una sola vez, a mano, al poner la base en marcha |
 | `recurrencias` | Diario 03:00 ART (idempotente) |
 | `purgar-cuentas` | Diario 04:00 ART |
 

@@ -43,7 +43,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 5 — Indicadores económicos (Módulo 4)
 
-- [ ] 5.1 Fuentes e ingesta
+- [x] 5.1 Fuentes e ingesta
 - [ ] 5.2 Web: panel de indicadores
 
 ## Fase 6 — Admin: módulos de la plataforma
@@ -347,11 +347,19 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Tests nuevos (web): promedio de gastos y fondo sugerido (2). Total web: 48.
 - Revisado en Chromium a 360 px con la API simulada. Falta probar contra la API real y en el celular.
 
-### 5.1 Fuentes e ingesta (solo investigación)
+### 5.1 Fuentes e ingesta
 
-- Propuesta de fuentes en `docs/fuentes-indicadores.md`: DolarApi para el oficial, el MEP y el CCL; Series de Tiempo de datos.gob.ar (INDEC) para el IPC, con ArgentinaDatos de respaldo y para el histórico inicial. Incluye endpoints, formato, límites (DolarApi pide como máximo una consulta cada 3 horas por serie), términos (cita obligatoria; el uso comercial no está explícito) y 4 preguntas para confirmar.
-- **No se implementó la ingesta**: el plan pide que Elías confirme las fuentes primero. El paso queda sin marcar.
-- La red de la sesión bloqueaba los hosts de las tres fuentes. Lo verificado sale de sus repos de GitHub; el resto (rutas exactas, formato del JSON, ID de la serie del IPC) está marcado "a verificar" y tiene los `curl` para correr en local.
+- **Investigación**: `docs/fuentes-indicadores.md`. Elías confirmó la propuesta tal cual: DolarApi para el oficial, el MEP y el CCL; Series de Tiempo de datos.gob.ar (INDEC) para el IPC, con ArgentinaDatos de respaldo; cada 3 horas.
+- **Shared**: `@efe/shared/indicadores` (subpath nuevo) con `CODIGOS_INDICADOR`, `brecha()`, `ipcAcumulado()` (compuesto, no sumado), `valorIndicador()` (hasta 6 decimales) y `FUENTE_MANUAL`. Schemas en `schemas/indicadores.ts`. 4 tests.
+- **API** (`modules/indicadores`):
+  - Adaptadores: `ProveedorDolarApi`, `ProveedorSeriesTiempo`, `ProveedorInflacionArgentinaDatos` (respaldo del IPC) y `ProveedorHistoricoDolaresArgentinaDatos`, más `ProveedorConRespaldo`. `ClienteHttp`: `fetch` nativo con timeout de 10 s y validación zod (`ErrorFuente` si la fuente no responde, responde con error o cambia el formato). Sin dependencias nuevas.
+  - `ingestar()`: `Promise.allSettled`, guarda por `(codigo, fecha)` sin duplicar, conserva las correcciones manuales y reporta las fallas al logger. **Sentry no está instalado todavía** (Fase 8): cuando se configure, `reportarFalla` es el único lugar a cambiar.
+  - Jobs `indicadores` e **`indicadores-historico`**: la carga inicial del plan (punto 7) quedó como job y no como script suelto, para reusar la app, la validación y el secreto de jobs. Se corre una vez con `curl -X POST -H "X-Jobs-Secret: …" <api>/api/v1/internal/jobs/indicadores-historico`.
+  - `GET /indicadores` (público): último valor de cada código con fecha, fuente, `obtenidoEn`, valor anterior y variación %; brecha MEP y CCL; IPC acumulado del año. `GET /indicadores/:codigo/historico?desde&hasta` (público; por defecto 90 días, y 24 meses para el IPC). Cache en memoria de 5 minutos, invalidado al ingestar o corregir. Los dos últimos valores por código salen con una sola consulta (`ROW_NUMBER()` en SQL).
+  - `GET /admin/indicadores?codigo&desde&hasta` y `PUT /admin/indicadores` (`@Roles('ADMIN')`): corrección manual con fuente "Carga manual EFE", registrada en `auditoria` (valor anterior y nuevo, IP). La ingesta no pisa esos valores.
+- **Tests**: unit de los proveedores con fixtures guardados en `test/fixtures/indicadores` (8 tests: mapeo, fechas en Argentina, fracción → %, nulls, cambio de formato, HTTP de error, sin conexión, timeout y respaldo). e2e `indicadores.e2e-spec.ts` (6 tests) con las fuentes simuladas: ingesta, cálculos, idempotencia, fuente caída (conserva el último valor; el IPC pasa al respaldo), histórico, corrección manual auditada que la ingesta no pisa, permisos (401/403) y variación diaria. Suite completa: 83 verdes.
+- **Sin verificar contra las fuentes reales**: la red de la sesión bloquea los tres hosts. Los fixtures siguen el formato documentado. **Primera prueba en local**: correr `pnpm --filter @efe/api dev`, después el job `indicadores` y revisar que todos los proveedores den `ok: true`. Si alguno dice "cambió el formato", el mensaje indica el campo; hay que ajustar el schema zod del adaptador y el fixture. Lo que más conviene confirmar es el ID de la serie del IPC (`148.3_INIVELNAL_DICI_M_26`).
+- Pendientes: el cron del job va en `jobs.yml` (paso 8.3, con el horario de ARCHITECTURE §8). El índice duplicado de `indicadores` (nota del 1.4) sigue ahí. Confirmar con el autor de DolarApi el uso comercial.
 
 ---
 
@@ -364,7 +372,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - 3.2 API de tarjetas, compras, resúmenes, compromisos y pagos.
 - 3.3 Web: tarjetas.
 - 4.1 Objetivos (shared + API + web).
-- 5.1: solo la investigación de fuentes (`docs/fuentes-indicadores.md`), sin implementar.
+- 5.1 Fuentes e ingesta de indicadores (después de que Elías confirmara las fuentes).
 
 Todo está en `main`, un commit (o dos en el 3.1) por paso.
 
@@ -397,4 +405,4 @@ No había navegador contra la API real. Lo visual se revisó en Chromium a 360 p
 4. **Inicio**: tarjeta del mes con el medidor, categorías (tocar una lleva a Movimientos filtrado), comparación, gráfico de 12 meses (tooltip y tocar un mes), Pesos/Dólares si hay datos en las dos monedas.
 5. **Tarjetas**: alta con día de cierre y de vencimiento. Compra en cuotas desde "+" → "Fue con tarjeta de crédito": revisar la vista previa del resumen y el modo "Puse cada cuota". Detalle del resumen: navegar períodos, corregir fechas (las cuotas se mueven) y volver a las de siempre, registrar un pago (el saldo de la cuenta baja; el gasto del mes no cambia), eliminar el pago. Abrir Comprometido.
 6. **Objetivos**: plantilla "Fondo de emergencia" (sugerencia de 3 y 6 meses si hay meses de gastos cargados), aportar y retirar, marcar cumplido al 100 %, archivar. Bloque de objetivos en el Inicio.
-7. **Fuentes de indicadores**: correr los `curl` de `docs/fuentes-indicadores.md` §6 y responder las 4 preguntas de §5 antes del paso 5.1.
+7. **Indicadores**: con la API local corriendo, `POST /internal/jobs/indicadores` y después `indicadores-historico` (con `X-Jobs-Secret`). Todos los proveedores tienen que responder `ok: true`. Revisar `GET /api/v1/indicadores` (brechas e IPC acumulado razonables).

@@ -9,6 +9,7 @@ export default defineConfig({
     'dinero/index': 'src/dinero/index.ts',
     'fechas/index': 'src/fechas/index.ts',
     'features/index': 'src/features/index.ts',
+    'indicadores/index': 'src/indicadores/index.ts',
     'objetivos/index': 'src/objetivos/index.ts',
     'recurrencias/index': 'src/recurrencias/index.ts',
     'schemas/index': 'src/schemas/index.ts',

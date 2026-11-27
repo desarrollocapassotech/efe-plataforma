@@ -1,6 +1,6 @@
-# Fuentes de indicadores (propuesta para el paso 5.1)
+# Fuentes de indicadores (paso 5.1)
 
-Esta es una **propuesta para que Elías confirme**. La ingesta no está implementada: el plan pide confirmar las fuentes antes.
+**Confirmado por Elías (nov 2026): la propuesta tal cual.** La ingesta está implementada (ver ARCHITECTURE §7). Las preguntas de §5 quedan resueltas así: DolarApi citando la fuente, dólar oficial también desde DolarApi, IPC desde Series de Tiempo con ArgentinaDatos de respaldo y una consulta cada 3 horas. Queda pendiente confirmar con el autor de DolarApi el uso comercial antes del lanzamiento público.
 
 **Hay que saber cómo se investigó.** La red de la sesión remota bloqueaba `dolarapi.com`, `argentinadatos.com`, `api.argentinadatos.com`, `datos.gob.ar`, `apis.datos.gob.ar` y `datosgobar.github.io`. Por eso no se pudo hacer ningún request de prueba ni leer la documentación en vivo. Lo de abajo sale de los repositorios de GitHub de los proyectos (legibles), de búsquedas web y de la documentación espejada en readthedocs. Cada dato dice si está **verificado** (leído en una fuente primaria) o si es **a verificar** (sale de un buscador o de un espejo). Antes de implementar, conviene correr los `curl` de la última sección desde la máquina local.
 

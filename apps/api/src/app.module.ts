@@ -13,6 +13,7 @@ import { ConfigService } from './config/config.service';
 import { CategoriasModule } from './modules/categorias/categorias.module';
 import { CuentasModule } from './modules/cuentas/cuentas.module';
 import { HealthModule } from './modules/health/health.module';
+import { IndicadoresModule } from './modules/indicadores/indicadores.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { MovimientosModule } from './modules/movimientos/movimientos.module';
 import { ObjetivosModule } from './modules/objetivos/objetivos.module';
@@ -61,6 +62,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ResumenModule,
     TarjetasModule,
     ObjetivosModule,
+    IndicadoresModule,
     JobsModule,
   ],
   providers: [

@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AppException } from '../../common/errors/app.exception';
+import { IndicadoresService } from '../indicadores/indicadores.service';
 import { RecurrenciasService } from '../recurrencias/recurrencias.service';
 
 export interface ResultadoJob {
@@ -10,7 +11,8 @@ export interface ResultadoJob {
 
 /**
  * Jobs disparados por cron externo (GitHub Actions, ARCHITECTURE §8).
- * `indicadores` (5.1) y `purgar-cuentas` (7.1) se agregan en sus pasos.
+ * `indicadores-historico` es la carga inicial (se corre una vez a mano).
+ * `purgar-cuentas` se agrega en el paso 7.1.
  */
 @Injectable()
 export class JobsService {
@@ -18,9 +20,16 @@ export class JobsService {
 
   private readonly jobs: Record<string, () => Promise<Record<string, unknown>>> = {
     recurrencias: async () => ({ ...(await this.recurrencias.materializarTodas()) }),
+    indicadores: async () => ({ ...(await this.indicadores.ingestar()) }),
+    'indicadores-historico': async () => ({
+      ...(await this.indicadores.ingestar(this.indicadores.proveedoresHistoricos())),
+    }),
   };
 
-  constructor(private readonly recurrencias: RecurrenciasService) {}
+  constructor(
+    private readonly recurrencias: RecurrenciasService,
+    private readonly indicadores: IndicadoresService,
+  ) {}
 
   async ejecutar(job: string): Promise<ResultadoJob> {
     const correr = this.jobs[job];
