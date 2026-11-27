@@ -7,6 +7,7 @@ import { MesNavigator } from '@/components/MesNavigator';
 import { Pagina } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
 import { NOMBRE_MONEDA } from '@/features/cuentas/tipos';
+import { WidgetIndicadores } from '@/features/indicadores/components/WidgetIndicadores';
 import { useCargaRapida } from '@/features/movimientos/carga-rapida-context';
 import { Segmentado } from '@/features/movimientos/components/Selectores';
 import { useMe } from '@/features/perfil/hooks';
@@ -94,6 +95,8 @@ export function InicioPage() {
       <TarjetasInicio moneda={moneda ?? me?.monedaPrincipal ?? 'ARS'} />
 
       <ObjetivosInicio />
+
+      <WidgetIndicadores />
     </Pagina>
   );
 }

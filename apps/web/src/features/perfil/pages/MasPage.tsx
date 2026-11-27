@@ -1,4 +1,12 @@
-import { ChevronRight, LogOut, Repeat, Tags, Wallet, type LucideIcon } from 'lucide-react';
+import {
+  ChevronRight,
+  LineChart,
+  LogOut,
+  Repeat,
+  Tags,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Pagina } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
@@ -26,6 +34,12 @@ const OPCIONES: { ruta: string; titulo: string; detalle: string; icono: LucideIc
     titulo: 'Recurrentes',
     detalle: 'Lo que se carga solo cada mes',
     icono: Repeat,
+  },
+  {
+    ruta: '/indicadores',
+    titulo: 'Dólar e inflación',
+    detalle: 'Cotizaciones del día e inflación del INDEC',
+    icono: LineChart,
   },
 ];
 

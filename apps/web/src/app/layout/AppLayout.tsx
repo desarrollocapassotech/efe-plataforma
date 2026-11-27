@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Logo } from '@/components/Logo';
 import { CargaRapidaProvider } from '@/features/movimientos/components/CargaRapida';
@@ -10,7 +11,8 @@ import { NAVEGACION } from './navegacion';
  * - Desktop (lg): sidebar azul a la izquierda con el logo y las secciones.
  * - Siempre: botón flotante "+" de carga rápida (CargaRapidaProvider).
  */
-export function AppLayout() {
+/** Con `children` se usa como marco de una página que no es hija del router privado. */
+export function AppLayout({ children }: { children?: ReactNode } = {}) {
   return (
     <CargaRapidaProvider>
       <div className="min-h-dvh lg:flex">
@@ -57,7 +59,7 @@ export function AppLayout() {
 
           {/* Contenido: deja lugar a la barra inferior y al botón "+" (que no tape lo último). */}
           <main className="flex-1 pb-[calc(9rem+env(safe-area-inset-bottom))] lg:pb-28">
-            <Outlet />
+            {children ?? <Outlet />}
           </main>
 
           {/* Barra de navegación inferior móvil */}

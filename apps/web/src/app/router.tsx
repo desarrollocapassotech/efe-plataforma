@@ -7,6 +7,7 @@ import { RegistroPage } from '@/features/auth/pages/RegistroPage';
 import { CategoriasPage } from '@/features/categorias/pages/CategoriasPage';
 import { CuentasPage } from '@/features/cuentas/pages/CuentasPage';
 import { InicioPage } from '@/features/dashboard/pages/InicioPage';
+import { IndicadoresPage } from '@/features/indicadores/pages/IndicadoresPage';
 import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage';
 import { MasPage } from '@/features/perfil/pages/MasPage';
 import { MovimientosPage } from '@/features/movimientos/pages/MovimientosPage';
@@ -64,5 +65,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // Pública y privada a la vez: con sesión se ve dentro de la app (ver IndicadoresPage).
+  { path: '/indicadores', element: <IndicadoresPage /> },
   { path: '*', element: <NoEncontrado /> },
 ]);

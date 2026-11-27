@@ -44,7 +44,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 ## Fase 5 — Indicadores económicos (Módulo 4)
 
 - [x] 5.1 Fuentes e ingesta
-- [ ] 5.2 Web: panel de indicadores
+- [x] 5.2 Web: panel de indicadores
 
 ## Fase 6 — Admin: módulos de la plataforma
 
@@ -361,6 +361,16 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - **Sin verificar contra las fuentes reales**: la red de la sesión bloquea los tres hosts. Los fixtures siguen el formato documentado. **Primera prueba en local**: correr `pnpm --filter @efe/api dev`, después el job `indicadores` y revisar que todos los proveedores den `ok: true`. Si alguno dice "cambió el formato", el mensaje indica el campo; hay que ajustar el schema zod del adaptador y el fixture. Lo que más conviene confirmar es el ID de la serie del IPC (`148.3_INIVELNAL_DICI_M_26`).
 - Pendientes: el cron del job va en `jobs.yml` (paso 8.3, con el horario de ARCHITECTURE §8). El índice duplicado de `indicadores` (nota del 1.4) sigue ahí. Confirmar con el autor de DolarApi el uso comercial.
 
+### 5.2 Web: panel de indicadores
+
+- **`/indicadores`, pública y privada a la vez**: sin sesión se ve con un encabezado propio (logo + "Ingresar") y una invitación "Crear mi cuenta". Con sesión se ve dentro de la app (`AppLayout` acepta `children` para esto), con flecha a Más. Ruta de primer nivel en el router, fuera de `RequiereSesion` y `SoloPublico`.
+- Una tarjeta por indicador, en este orden: MEP (el que más se mira), oficial y CCL. Cada una con venta grande, compra, variación contra el día anterior (flecha, **sin rojo/verde**: que el dólar suba no es bueno ni malo para todos), brecha contra el oficial para MEP y CCL, una línea corta de qué es cada dólar, un mini gráfico de 30 días y **fecha del dato + fuente** (con link a la fuente). Inflación: último mes, mes anterior, acumulada del año, mini gráfico de 12 meses, fuente INDEC. Al pie, la aclaración de que es información de referencia y no una recomendación de inversión.
+- Mini gráficos con un SVG propio (`Sparkline`, sin Recharts: es solo la forma de la serie y no hace falta cargar la librería). El punto final va en HTML para que no se deforme.
+- **Inicio**: widget "Dólar e inflación" con MEP, oficial, brecha y la última inflación, con la fecha y la fuente.
+- **Más**: acceso "Dólar e inflación".
+- `formatearPorcentaje` ("3,7 %") con tests. Test de la página sin sesión (datos, fecha y fuente, invitación). Total web: 51.
+- Revisado en Chromium a 360 px con la API simulada. Falta verlo con los datos reales (después del primer job de indicadores) y en el celular.
+
 ---
 
 ## Para revisar en local (sesión remota del 26–27/11/2026)
@@ -373,6 +383,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - 3.3 Web: tarjetas.
 - 4.1 Objetivos (shared + API + web).
 - 5.1 Fuentes e ingesta de indicadores (después de que Elías confirmara las fuentes).
+- 5.2 Web: panel de indicadores (`/indicadores`, pública y privada) y widget en el inicio.
 
 Todo está en `main`, un commit (o dos en el 3.1) por paso.
 
