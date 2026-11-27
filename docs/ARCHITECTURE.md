@@ -765,6 +765,7 @@ model MontoSuscripcion {
 
 - **Etapa 2 — Contenido:** `Informe` (título, slug, categoría, cuerpo en Markdown/JSON de editor, nivel de acceso por feature, publicado/borrador, fecha), `RecursoEducativo`, `ResumenMercado`. Editor en el admin. Informes públicos → evaluar SSR (Astro/Next) para SEO.
 - **Etapa 3 — Inversiones:** `CarteraModelo` + `VersionCartera` + `ComponenteCartera` (instrumento, %), `Emisor`, `ObligacionNegociable`, `FlujoON` (fecha, interés, amortización), `PrecioInstrumento` (serie temporal), `CalificacionCrediticia`, `ClasificacionEmisor` (verde/amarillo/rojo + criterio + fecha), `PosicionUsuario`, `Alerta`. Cálculos (TIR, duration, paridad) en `packages/shared`.
+  - **Requisito (pedido de Flor, nov 2026): avisos de vencimientos de ON**, como mínimo para las administradoras en el admin. Se arma con lo que ya está previsto: `FlujoON` (fechas de pago) + `Alerta` + un job diario `vencimientos-on` (§8). Propuesta a confirmar: vencimiento = cada fecha de `FlujoON` (renta y amortización), no solo la amortización final; aviso 7 días antes y el mismo día; canal: notificación dentro del admin (campana con badge y listado "Próximos vencimientos") + email a los usuarios con rol `ADMIN`; push del navegador como opcional, reusando lo que ya tiene el admin (`apps/admin/NOTIFICACIONES_PUSH.md`). Ampliable después a los usuarios con la feature de inversiones (vencimientos de las ON de su cartera).
 - **Etapa 4 — Acciones:** `Empresa`, `Cotizacion`, `RatioHistorico`, `PrecioObjetivo` (de terceros, separado de valuaciones propias).
 - **Etapa 5 — IA:** `Conversacion`, `MensajeIA`, embeddings de contenido con pgvector.
 
@@ -939,3 +940,4 @@ VITE_SENTRY_DSN
 | 7 | Dominio | Ambos |
 | 8 | Proveedor de IA para L1.5 | Elías |
 | 9 | Fuentes de datos de ON y su costo (antes de la Etapa 3) | Elías |
+| 10 | Avisos de vencimientos de ON (Etapa 3): qué cuenta como vencimiento (cada pago o solo el final), con cuánta anticipación, por qué canal (admin, email, push) y de qué ON (todas las cargadas o solo las de carteras/clientes) | Flor |
