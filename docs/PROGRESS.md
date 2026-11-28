@@ -52,7 +52,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 7 — Seguridad, privacidad y cumplimiento
 
-- [ ] 7.1 Auditoría, límites y datos del usuario
+- [x] 7.1 Auditoría, límites y datos del usuario
 
 ## Fase 8 — Deploy a producción
 
@@ -389,6 +389,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
   - Cliente HTTP nuevo `src/lib/api-efe.ts` (como `faktia.ts`: ID token de Firebase, reintento con token refrescado si responde 401, mensaje claro si el usuario no es ADMIN en la API). Config: **`VITE_API_URL`** (agregada a `apps/admin/.env.example`; hay que sumarla al `.env` local del admin). `@efe/shared` pasa a ser dependencia del admin (`workspace:*`) para reusar tipos y códigos sin duplicarlos.
 - Revisado en Chromium con la API simulada (desktop y móvil): listado y panel de usuarios, métricas, indicadores en móvil. Falta probarlo contra la API real con el usuario admin del seed.
 
+### 7.1 Auditoría, límites y datos del usuario
+
+- **Auditoría**: `AuditoriaService` global (`common/auditoria`) con códigos estables (`cuenta.eliminar`, `cuenta.restaurar`, `cuenta.purgar`, `usuario.exportar`, `usuario.aceptar_terminos`, `admin.cambiar_plan`, `admin.corregir_indicador`) e IP. Se escribe dentro de la transacción de la acción. Admin e indicadores pasaron a usarlo. **Distinto al plan**: llamadas explícitas al servicio en vez de un decorador `@Auditar` (cada acción necesita datos distintos: plan anterior, valor anterior; un interceptor no los tiene).
+- **Límites**: `@Throttle` 3 por hora en `GET /me/exportar` y `DELETE /me`; 60/min en los controllers admin (`common/auth/limites.ts`). Ojo: el throttler cuenta **por IP y por ruta**.
+- **`GET /me/exportar`**: JSON con usuario (sin `firebaseUid`), cuentas, categorías, movimientos, transferencias, recurrencias, tarjetas (con cierres), compras (con cuotas), pagos, objetivos (con aportes), perfiles y suscripciones, con `Content-Disposition` de descarga. Se arma en memoria (alcanza para los volúmenes de una persona; anotado pasar a streaming si crece).
+- **`DELETE /me`** `{ confirmacion: "ELIMINAR" }`: marca `eliminadoEn`, audita y revoca los refresh tokens de Firebase (`CuentasFirebase`, con implementación de prueba en los e2e). Si Firebase falla, la baja queda igual (las sesiones vencen en 1 h) y se loguea. Con la cuenta dada de baja, todo responde 403 `CUENTA_ELIMINADA` con `details.purgaEn`, salvo **`POST /me/restaurar`** (decorador `@PermitirCuentaEliminada`).
+- **Job `purgar-cuentas`**: a los 30 días (`DIAS_PARA_PURGAR`) borra el usuario en Firebase y después en Postgres (cascada) y deja la fila de auditoría. Si Firebase falla, se reintenta al día siguiente.
+- **Términos**: migración **`20261128120000_terminos_usuario`** (`terminosVersion`, `terminosAceptadosEn` en `usuarios`), generada con `prisma migrate diff` contra una base sombra local. `TERMINOS_VERSION = '2026-11-borrador'` en shared; `POST /me/terminos` (solo acepta la versión vigente). Web: checkbox obligatorio en el registro (también antes de "Continuar con Google"), y al entrar, si `me.terminosVersion` no es la vigente, pantalla "Antes de seguir" (si se tildó en el registro, se registra sola). Así también se vuelve a pedir cuando cambie la versión. `/terminos` y `/privacidad` públicas, renderizan `apps/web/src/legal/*.md` con un renderer de Markdown mínimo propio (`components/Markdown.tsx`, sin dependencia). **Los textos son placeholders marcados como BORRADOR: los tiene que entregar EFE.**
+- **Web**: Más → **Tu perfil** (`/mas/perfil`): nombre, moneda principal, "Descargar mis datos" (JSON), fecha de aceptación de términos y **Eliminar mi cuenta** (doble confirmación: botón → panel con qué pasa → escribir ELIMINAR). Pantalla "Tu cuenta está programada para eliminarse" con la fecha de purga y **Recuperar mi cuenta**.
+- **Sentry** en API (`@sentry/node`), web y admin (`@sentry/react`), versión 11.20: solo con `SENTRY_DSN` / `VITE_SENTRY_DSN`. Limpieza de PII en `beforeSend`/`beforeBreadcrumb` con `ocultarDatosSensibles`/`limpiarProfundo` (`@efe/shared/privacidad`, con tests): emails y montos fuera; usuario solo por id; sin IP, cookies, headers ni bodies. La API reporta los 500 desde el filtro global y las fallas de fuentes de indicadores. En el navegador se carga con import dinámico (chunk aparte). Dependencias nuevas: `@sentry/node` (API: el SDK oficial para Node; `@sentry/nestjs` agrega módulos que no hacen falta porque ya hay un filtro global) y `@sentry/react` (web y admin).
+- **Tests**: e2e `privacidad.e2e-spec.ts` (6: términos, exportación completa y solo propia, límite de 3 por hora, baja con confirmación y revocación, recuperación, purga a los 30 días con auditoría que sobrevive) y **`aislamiento.e2e-spec.ts`** (3: el genérico que recorre los 25 endpoints con id usando recursos de otro usuario y espera 404, crear con recursos ajenos, listados). Suite: 97 e2e verdes. Web: registro con términos (3) y Markdown (1).
+- **Revisión de endpoints que no filtran por `usuarioId`** (punto 9): solo los que corresponde por diseño: `GET /health` y `GET /indicadores*` (públicos, datos de mercado), `POST /internal/jobs/:job` (secreto de jobs; procesan todos los usuarios) y `/admin/*` (rol ADMIN; los usuarios solo con contadores). Todos los demás filtran por el usuario del token (lo verifica el test genérico).
+- Pendiente: textos legales definitivos (EFE); el DSN de Sentry (paso 0.5/8.2); `jobs.yml` con `purgar-cuentas` diario (8.3). El bundle inicial de la web pasa los 500 kB sin comprimir (148 kB gzip) con todas las secciones: conviene cargar las rutas con `lazy()` en la Fase 8.
+
 ---
 
 ## Para revisar en local (sesión remota del 26–27/11/2026)
@@ -403,6 +417,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - 5.1 Fuentes e ingesta de indicadores (después de que Elías confirmara las fuentes).
 - 5.2 Web: panel de indicadores (`/indicadores`, pública y privada) y widget en el inicio.
 - 6.1 Admin: usuarios de la plataforma, métricas, indicadores y auditoría (API + 4 secciones del admin).
+- 7.1 Seguridad y privacidad: auditoría, límites, exportar/eliminar/recuperar cuenta, purga, términos y Sentry.
 
 Todo está en `main`, un commit (o dos en el 3.1) por paso.
 
@@ -425,7 +440,7 @@ Todo está en `main`, un commit (o dos en el 3.1) por paso.
 - Unit: shared 144, web 48, API sin cambios.
 
 ### Migraciones
-- **Ninguna nueva.** Los modelos de tarjetas, cuotas, pagos y objetivos ya estaban en el schema.
+- **`20261128120000_terminos_usuario` (7.1), sin aplicar en `develop`**: agrega `terminosVersion` y `terminosAceptadosEn` a `usuarios`. Aplicarla con `pnpm --filter @efe/api exec prisma migrate deploy` (con el `.env` de develop) o `prisma migrate dev`. En `test` la aplican solos los e2e. Las demás tablas usadas en esta sesión ya estaban en el schema.
 
 ### Qué probar a mano (navegador y celular)
 No había navegador contra la API real. Lo visual se revisó en Chromium a 360 px con una API simulada.
@@ -436,4 +451,5 @@ No había navegador contra la API real. Lo visual se revisó en Chromium a 360 p
 5. **Tarjetas**: alta con día de cierre y de vencimiento. Compra en cuotas desde "+" → "Fue con tarjeta de crédito": revisar la vista previa del resumen y el modo "Puse cada cuota". Detalle del resumen: navegar períodos, corregir fechas (las cuotas se mueven) y volver a las de siempre, registrar un pago (el saldo de la cuenta baja; el gasto del mes no cambia), eliminar el pago. Abrir Comprometido.
 6. **Objetivos**: plantilla "Fondo de emergencia" (sugerencia de 3 y 6 meses si hay meses de gastos cargados), aportar y retirar, marcar cumplido al 100 %, archivar. Bloque de objetivos en el Inicio.
 7. **Admin (6.1)**: agregar `VITE_API_URL=http://localhost:3000/api/v1` al `.env` del admin, levantar API y admin, entrar con tu usuario (tiene que ser ADMIN en la base: seed) y revisar Usuarios plataforma (cambiar el plan de un usuario de prueba y verlo en Auditoría), Métricas e Indicadores (corregir un valor).
-8. **Indicadores**: con la API local corriendo, `POST /internal/jobs/indicadores` y después `indicadores-historico` (con `X-Jobs-Secret`). Todos los proveedores tienen que responder `ok: true`. Revisar `GET /api/v1/indicadores` (brechas e IPC acumulado razonables).
+8. **Privacidad (7.1)**: registrarse con el checkbox de términos (y ver que no lo vuelva a pedir al entrar), Más → Tu perfil → Descargar mis datos (abrir el JSON) y Eliminar mi cuenta (escribir ELIMINAR) → volver a entrar → Recuperar mi cuenta. Revisar en Auditoría del admin que quedó todo registrado.
+9. **Indicadores**: con la API local corriendo, `POST /internal/jobs/indicadores` y después `indicadores-historico` (con `X-Jobs-Secret`). Todos los proveedores tienen que responder `ok: true`. Revisar `GET /api/v1/indicadores` (brechas e IPC acumulado razonables).

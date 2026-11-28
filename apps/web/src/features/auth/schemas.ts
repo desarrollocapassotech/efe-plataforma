@@ -19,6 +19,7 @@ export const RegistroSchema = z
       .min(8, 'Usá al menos 8 caracteres')
       .max(128, 'Usá como máximo 128 caracteres'),
     confirmacion: z.string(),
+    acepto: z.boolean().refine((v) => v, 'Para crear la cuenta tenés que aceptar los términos'),
   })
   .refine((d) => d.password === d.confirmacion, {
     path: ['confirmacion'],

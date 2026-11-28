@@ -14,6 +14,7 @@ import type {
 import { Prisma, type Usuario } from '@prisma/client';
 import { noEncontrado } from '../../common/errors/errores';
 import { fechaADb, fechaDeDb } from '../../common/fechas';
+import { AuditoriaService } from '../../common/auditoria/auditoria.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const DIA_MS = 86_400_000;
@@ -27,7 +28,10 @@ const finDelDia = (fecha: string) => new Date(fechaADb(fecha).getTime() + DIA_MS
  */
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditar: AuditoriaService,
+  ) {}
 
   async listarUsuarios(q: ListarUsuariosAdminQuery): Promise<PaginaAdmin<UsuarioAdmin>> {
     const where: Prisma.UsuarioWhereInput = {
@@ -120,17 +124,18 @@ export class AdminService {
     if (!actual) throw noEncontrado('No encontramos el usuario');
     const usuario = await this.prisma.$transaction(async (tx) => {
       const actualizado = await tx.usuario.update({ where: { id }, data: { plan: datos.plan } });
-      await tx.auditoria.create({
-        data: {
-          usuarioId: id,
-          actorId,
+      await this.auditar.registrar(
+        {
           accion: 'admin.cambiar_plan',
           entidad: 'Usuario',
           entidadId: id,
+          usuarioId: id,
+          actorId,
           datos: { anterior: actual.plan, nuevo: datos.plan, motivo: datos.motivo ?? null },
-          ip: ip ?? null,
+          ip,
         },
-      });
+        tx,
+      );
       return actualizado;
     });
     const movimientos = await this.prisma.movimiento.count({ where: { usuarioId: id } });

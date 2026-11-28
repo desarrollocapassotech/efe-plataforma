@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { LIMITE_ADMIN } from '../../common/auth/limites';
 import type {
   AuditoriaItem,
   Metricas,
@@ -25,6 +27,7 @@ import {
 @ApiTags('admin')
 @ApiBearerAuth()
 @Roles('ADMIN')
+@Throttle(LIMITE_ADMIN)
 @Controller('admin')
 export class AdminController {
   constructor(private readonly admin: AdminService) {}

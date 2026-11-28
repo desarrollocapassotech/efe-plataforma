@@ -10,7 +10,6 @@ import {
 import { Link } from 'react-router-dom';
 import { Pagina } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/features/auth/auth-context';
 import { useMe } from '../hooks';
 
@@ -43,7 +42,7 @@ const OPCIONES: { ruta: string; titulo: string; detalle: string; icono: LucideIc
   },
 ];
 
-// "Más": lo que no se usa todos los días. El perfil (7.1) se suma acá.
+// "Más": lo que no se usa todos los días.
 export function MasPage() {
   const { logout } = useAuth();
   const { data: me } = useMe();
@@ -70,22 +69,23 @@ export function MasPage() {
         ))}
       </ul>
 
-      <Card>
-        <CardContent className="space-y-3 pt-5">
-          <p className="eyebrow">Tu cuenta</p>
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="truncate font-medium">{me?.nombre ?? me?.email}</p>
-              {me?.nombre && <p className="truncate text-sm text-muted-foreground">{me.email}</p>}
-            </div>
+      <Link to="/mas/perfil" className="block rounded-lg border bg-card transition hover:bg-accent">
+        <div className="flex items-center justify-between gap-4 px-4 py-4">
+          <div className="min-w-0 space-y-1">
+            <p className="eyebrow">Tu perfil</p>
+            <p className="truncate font-medium">{me?.nombre ?? me?.email}</p>
+            {me?.nombre && <p className="truncate text-sm text-muted-foreground">{me.email}</p>}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             {me && (
-              <span className="shrink-0 rounded-md bg-gold/10 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-foreground">
+              <span className="rounded-md bg-gold/10 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-foreground">
                 {NOMBRE_PLAN[me.plan]}
               </span>
             )}
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Link>
       <Button variant="outline" className="w-full" onClick={() => void logout()}>
         <LogOut />
         Cerrar sesión

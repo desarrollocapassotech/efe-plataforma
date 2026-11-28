@@ -26,6 +26,8 @@ function usuario(parcial: Partial<Usuario> = {}): Usuario {
     creadoEn: AHORA,
     actualizadoEn: AHORA,
     eliminadoEn: null,
+    terminosVersion: null,
+    terminosAceptadosEn: null,
     ...parcial,
   };
 }

@@ -6,9 +6,16 @@ import type { RequestConUsuario, UsuarioActual } from './usuario-actual';
 export const ES_PUBLICO = 'efe:publico';
 export const ROLES_REQUERIDOS = 'efe:roles';
 export const FEATURE_REQUERIDA = 'efe:feature';
+export const PERMITE_CUENTA_ELIMINADA = 'efe:permite-eliminada';
 
 /** El endpoint no requiere token. Todo lo demás es privado por default. */
 export const Public = () => SetMetadata(ES_PUBLICO, true);
+
+/**
+ * El endpoint acepta usuarios con la cuenta dada de baja (dentro de los 30 días): solo para
+ * ver el estado y recuperarla. El resto responde 403 CUENTA_ELIMINADA.
+ */
+export const PermitirCuentaEliminada = () => SetMetadata(PERMITE_CUENTA_ELIMINADA, true);
 
 /** Solo usuarios con alguno de estos roles. 403 PROHIBIDO si no. */
 export const Roles = (...roles: Rol[]) => SetMetadata(ROLES_REQUERIDOS, roles);

@@ -9,7 +9,9 @@ import { CuentasPage } from '@/features/cuentas/pages/CuentasPage';
 import { InicioPage } from '@/features/dashboard/pages/InicioPage';
 import { IndicadoresPage } from '@/features/indicadores/pages/IndicadoresPage';
 import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage';
+import { LegalPage } from '@/features/legal/pages/LegalPage';
 import { MasPage } from '@/features/perfil/pages/MasPage';
+import { PerfilPage } from '@/features/perfil/pages/PerfilPage';
 import { MovimientosPage } from '@/features/movimientos/pages/MovimientosPage';
 import { RecurrentesPage } from '@/features/recurrencias/pages/RecurrentesPage';
 import { ObjetivoPage } from '@/features/objetivos/pages/ObjetivoPage';
@@ -61,11 +63,15 @@ export const router = createBrowserRouter([
           { path: '/mas/cuentas', element: <CuentasPage /> },
           { path: '/mas/categorias', element: <CategoriasPage /> },
           { path: '/mas/recurrentes', element: <RecurrentesPage /> },
+          { path: '/mas/perfil', element: <PerfilPage /> },
         ],
       },
     ],
   },
   // Pública y privada a la vez: con sesión se ve dentro de la app (ver IndicadoresPage).
   { path: '/indicadores', element: <IndicadoresPage /> },
+  // Públicas: se abren desde el registro, sin sesión.
+  { path: '/terminos', element: <LegalPage documento="terminos" /> },
+  { path: '/privacidad', element: <LegalPage documento="privacidad" /> },
   { path: '*', element: <NoEncontrado /> },
 ]);

@@ -12,6 +12,7 @@ import type { Response } from 'express';
 import { ZodValidationException } from 'nestjs-zod';
 import type { ZodError } from 'zod';
 import { AppException } from '../errors/app.exception';
+import { reportarError } from '../sentry';
 
 export interface CuerpoError {
   error: { code: string; message: string; details?: unknown };
@@ -117,6 +118,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const { status, cuerpo } = mapearExcepcion(exception);
     if (status >= 500) {
       this.logger.error(exception instanceof Error ? exception.stack : String(exception));
+      reportarError(exception);
     }
     res.status(status).json(cuerpo);
   }

@@ -4,6 +4,7 @@ export * from './fechas';
 export * from './features';
 export * from './indicadores';
 export * from './objetivos';
+export * from './privacidad';
 export * from './recurrencias';
 export * from './schemas';
 export * from './tarjetas';

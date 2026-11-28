@@ -86,6 +86,9 @@ model Usuario {
   creadoEn             DateTime  @default(now())
   actualizadoEn        DateTime  @updatedAt
   eliminadoEn          DateTime?
+  /// Versión de términos y privacidad aceptada y cuándo (Ley 25.326, ARCHITECTURE §9).
+  terminosVersion      String?
+  terminosAceptadosEn  DateTime?
 
   cuentas        Cuenta[]
   categorias     Categoria[]

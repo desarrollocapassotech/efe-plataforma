@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { ZodValidationPipe } from 'nestjs-zod';
+import { AuditoriaModule } from './common/auditoria/auditoria.module';
 import { AuthModule } from './common/auth/auth.module';
 import { FirebaseAuthGuard } from './common/auth/firebase-auth.guard';
 import { FeatureGuard, RolesGuard } from './common/auth/permisos.guard';
@@ -53,6 +54,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     PrismaModule,
     AuthModule,
+    AuditoriaModule,
     HealthModule,
     UsuariosModule,
     CuentasModule,

@@ -317,6 +317,8 @@ model Usuario {
   creadoEn             DateTime  @default(now())
   actualizadoEn        DateTime  @updatedAt
   eliminadoEn          DateTime?
+  terminosVersion      String?   // versión de términos y privacidad aceptada
+  terminosAceptadosEn  DateTime?
 
   cuentas         Cuenta[]
   categorias      Categoria[]
@@ -785,8 +787,10 @@ Prefijo `/api/v1`. Todos privados salvo indicación.
 | GET | `/health` | Público. Estado + versión |
 | GET | `/me` | Usuario, plan, features, onboarding |
 | PATCH | `/me` | Nombre, moneda principal, onboarding completado |
-| GET | `/me/exportar` | JSON con todos los datos del usuario |
-| DELETE | `/me` | Baja de cuenta (soft delete + borrado definitivo a los 30 días) |
+| GET | `/me/exportar` | JSON con todos los datos del usuario (3 por hora, auditado) |
+| POST | `/me/terminos` | Acepta la versión vigente de términos y privacidad (`TERMINOS_VERSION`) |
+| DELETE | `/me` | Baja de cuenta con `{ confirmacion: "ELIMINAR" }` (soft delete, revoca sesiones de Firebase; borrado definitivo a los 30 días; 3 por hora) |
+| POST | `/me/restaurar` | Recupera la cuenta dentro de los 30 días (único endpoint, con `GET`/`PATCH` bloqueados, que acepta cuentas dadas de baja) |
 | GET/POST | `/cuentas` | Listar (con saldo actual) / crear |
 | PATCH/DELETE | `/cuentas/:id` | Editar / borrar (409 si tiene movimientos → archivar) |
 | GET/POST | `/categorias` | `?tipo=GASTO\|INGRESO` |
@@ -876,10 +880,12 @@ Disparados por **GitHub Actions `schedule`** llamando a `POST /api/v1/internal/j
 - `helmet`, CORS con lista de orígenes, `@nestjs/throttler` (límite global + más estricto en endpoints sensibles).
 - Validación estricta de input (zod, sin campos extra).
 - Aislamiento por usuario en todos los servicios + tests e2e que verifican que un usuario no puede leer/modificar datos de otro.
-- Auditoría de: baja de cuenta, exportación, cambios de plan, acciones de admin.
+- Auditoría (`AuditoriaService`, tabla `auditoria` sin FK para sobrevivir a la purga): baja, recuperación y purga de cuenta, exportación, aceptación de términos, cambios de plan y correcciones de indicadores, con IP.
+- Límites: global 100/min por IP; `GET /me/exportar` y `DELETE /me` 3 por hora; endpoints admin 60/min. El throttler cuenta por IP y por ruta.
+- Errores a Sentry (API, web y admin) solo si hay DSN, sin datos personales: usuario solo por id, sin IP, cookies, headers ni bodies, y mensajes/breadcrumbs limpiados de emails y montos (`@efe/shared/privacidad`). En el navegador Sentry se carga aparte (import dinámico).
 - Secretos solo en variables de entorno (Render / GitHub Secrets). Nada de `.env` versionado. Service account de Firebase solo en la API.
 - Backups: Neon con restauración a un punto en el tiempo (plan pago desde el lanzamiento público).
-- Exportación y borrado de datos por el usuario (Ley 25.326). Política de privacidad y términos: los redacta EFE con asesoramiento legal; la app los muestra y registra la aceptación (fecha + versión).
+- Exportación y borrado de datos por el usuario (Ley 25.326). Política de privacidad y términos: los redacta EFE con asesoramiento legal (hoy hay placeholders en `apps/web/src/legal/*.md`); la app los muestra en `/terminos` y `/privacidad`, exige aceptarlos (checkbox en el registro y pantalla al entrar si cambió `TERMINOS_VERSION`) y registra versión + fecha en `Usuario`.
 - Disclaimers de contenido financiero (carteras modelo, test de perfil, IA): textos definidos por Flor según su habilitación ante la CNV.
 - No se guardan números completos de tarjeta: solo los últimos 4 dígitos, opcionales.
 

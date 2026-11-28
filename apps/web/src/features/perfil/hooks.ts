@@ -2,7 +2,7 @@ import type { Feature } from '@efe/shared/features';
 import type { ActualizarMe } from '@efe/shared/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/auth-context';
-import { actualizarMe, obtenerMe } from './api';
+import { aceptarTerminos, actualizarMe, obtenerMe, restaurarCuenta } from './api';
 
 export const claveMe = ['me'] as const;
 
@@ -24,4 +24,20 @@ export function useActualizarMe() {
 export function useFeature(feature: Feature): boolean {
   const { data } = useMe();
   return data?.features.includes(feature) ?? false;
+}
+
+export function useAceptarTerminos() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: aceptarTerminos,
+    onSuccess: (me) => queryClient.setQueryData(claveMe, me),
+  });
+}
+
+export function useRestaurarCuenta() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: restaurarCuenta,
+    onSuccess: (me) => queryClient.setQueryData(claveMe, me),
+  });
 }

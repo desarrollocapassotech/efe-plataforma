@@ -1,4 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { DIAS_PARA_PURGAR } from '@efe/shared/schemas';
 import { Prisma, type Usuario } from '@prisma/client';
 import { categoriasDefaultPara } from '../../modules/categorias/plantilla';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -13,14 +14,25 @@ const UNA_HORA_MS = 60 * 60 * 1000;
 export class SesionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async resolver(identidad: IdentidadToken, ahora = new Date()): Promise<UsuarioActual> {
+  async resolver(
+    identidad: IdentidadToken,
+    ahora = new Date(),
+    { permiteEliminada = false } = {},
+  ): Promise<UsuarioActual> {
     const usuario = await this.obtenerOCrear(identidad);
 
-    if (usuario.eliminadoEn) {
+    if (usuario.eliminadoEn && !permiteEliminada) {
+      // La web muestra cuándo se borra y ofrece recuperarla (POST /me/restaurar).
       throw new AppException(
         'CUENTA_ELIMINADA',
         'Tu cuenta está programada para eliminarse',
         HttpStatus.FORBIDDEN,
+        {
+          eliminadoEn: usuario.eliminadoEn.toISOString(),
+          purgaEn: new Date(
+            usuario.eliminadoEn.getTime() + DIAS_PARA_PURGAR * 24 * UNA_HORA_MS,
+          ).toISOString(),
+        },
       );
     }
 

@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from './config/config.service';
 import { configurarApp } from './configurar-app';
 import { validarEnv } from './config/env';
+import { iniciarSentry } from './common/sentry';
 
 async function bootstrap(): Promise<void> {
   // Antes de crear la app: si el entorno es inválido, solo el mensaje claro, sin stack de Nest.
@@ -18,6 +19,14 @@ async function bootstrap(): Promise<void> {
     throw new Error(
       'NODE_ENV=test es solo para tests automatizados: la API no arranca en ese modo.',
     );
+  }
+
+  if (env.SENTRY_DSN) {
+    iniciarSentry({
+      dsn: env.SENTRY_DSN,
+      entorno: env.NODE_ENV,
+      version: process.env.npm_package_version ?? 'dev',
+    });
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });

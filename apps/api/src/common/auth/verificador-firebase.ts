@@ -1,7 +1,23 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { type Auth, getAuth } from 'firebase-admin/auth';
 import { ConfigService } from '../../config/config.service';
+import { CuentasFirebase } from './cuentas-firebase';
 import { type IdentidadToken, VerificadorToken } from './verificador-token';
+
+/** App de firebase-admin (una sola por proceso) con la service account de la config. */
+function authDeFirebase(config: ConfigService): Auth {
+  const app =
+    getApps()[0] ??
+    initializeApp({
+      credential: cert({
+        projectId: config.get('FIREBASE_PROJECT_ID'),
+        clientEmail: config.get('FIREBASE_CLIENT_EMAIL'),
+        // En Render la clave suele quedar con "\\n" literales: se convierten a saltos reales.
+        privateKey: config.get('FIREBASE_PRIVATE_KEY')?.replace(/\\n/g, '\n'),
+      }),
+    });
+  return getAuth(app);
+}
 
 /**
  * Producción y desarrollo: verifica el ID token con firebase-admin.
@@ -13,21 +29,34 @@ export class VerificadorFirebase extends VerificadorToken {
 
   constructor(config: ConfigService) {
     super();
-    const app =
-      getApps()[0] ??
-      initializeApp({
-        credential: cert({
-          projectId: config.get('FIREBASE_PROJECT_ID'),
-          clientEmail: config.get('FIREBASE_CLIENT_EMAIL'),
-          // En Render la clave suele quedar con "\n" literales: se convierten a saltos reales.
-          privateKey: config.get('FIREBASE_PRIVATE_KEY')?.replace(/\\n/g, '\n'),
-        }),
-      });
-    this.auth = getAuth(app);
+    this.auth = authDeFirebase(config);
   }
 
   async verificar(token: string): Promise<IdentidadToken> {
     const decodificado = await this.auth.verifyIdToken(token);
     return { firebaseUid: decodificado.uid, email: decodificado.email };
+  }
+}
+
+/** Baja y purga de cuentas en Firebase (revocar sesiones, borrar el usuario). */
+export class CuentasFirebaseAdmin extends CuentasFirebase {
+  private readonly auth: Auth;
+
+  constructor(config: ConfigService) {
+    super();
+    this.auth = authDeFirebase(config);
+  }
+
+  async revocarSesiones(firebaseUid: string): Promise<void> {
+    await this.auth.revokeRefreshTokens(firebaseUid);
+  }
+
+  async borrarUsuario(firebaseUid: string): Promise<void> {
+    try {
+      await this.auth.deleteUser(firebaseUid);
+    } catch (error) {
+      if ((error as { code?: string }).code === 'auth/user-not-found') return;
+      throw error;
+    }
   }
 }

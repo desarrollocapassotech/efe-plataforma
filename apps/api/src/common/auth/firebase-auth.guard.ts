@@ -2,7 +2,7 @@ import { type CanActivate, type ExecutionContext, HttpStatus, Injectable } from 
 import { Reflector } from '@nestjs/core';
 import type { RequestConUsuario } from './usuario-actual';
 import { AppException } from '../errors/app.exception';
-import { ES_PUBLICO } from './decoradores';
+import { ES_PUBLICO, PERMITE_CUENTA_ELIMINADA } from './decoradores';
 import { SesionService } from './sesion.service';
 import { VerificadorToken } from './verificador-token';
 
@@ -39,7 +39,11 @@ export class FirebaseAuthGuard implements CanActivate {
       );
     }
 
-    req.user = await this.sesion.resolver(identidad);
+    const permiteEliminada = this.reflector.getAllAndOverride<boolean>(PERMITE_CUENTA_ELIMINADA, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    req.user = await this.sesion.resolver(identidad, new Date(), { permiteEliminada });
     return true;
   }
 }

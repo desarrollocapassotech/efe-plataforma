@@ -40,6 +40,8 @@ describe('MeSchema', () => {
         onboardingCompletado: false,
         features: ['finanzas'],
         creadoEn: '2026-11-26T15:00:00.000Z',
+        terminosVersion: null,
+        terminosAceptadosEn: null,
       }).success,
     ).toBe(true);
   });

@@ -2,6 +2,11 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { BotonReintentar, PantallaCarga, PantallaError } from '@/components/Pantallas';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
+import { TERMINOS_VERSION } from '@efe/shared/schemas';
+import {
+  PantallaCuentaEliminada,
+  PantallaTerminos,
+} from '@/features/perfil/components/PantallasCuenta';
 import { useMe } from '@/features/perfil/hooks';
 import { esApiError } from '@/lib/api-error';
 
@@ -44,18 +49,8 @@ export function RequiereSesion() {
 
   if (me.isError) {
     if (esApiError(me.error, 'CUENTA_ELIMINADA')) {
-      // TODO(7.1): opción de restaurar la cuenta dentro de los 30 días.
-      return (
-        <PantallaError
-          titulo="Tu cuenta está programada para eliminarse"
-          mensaje="Si fue un error, escribinos para recuperarla antes de que se borre definitivamente."
-          acciones={
-            <Button variant="outline" onClick={() => void logout()}>
-              Cerrar sesión
-            </Button>
-          }
-        />
-      );
+      const detalles = me.error.details as { purgaEn?: string } | undefined;
+      return <PantallaCuentaEliminada purgaEn={detalles?.purgaEn} />;
     }
     return (
       <PantallaError
@@ -72,6 +67,8 @@ export function RequiereSesion() {
       />
     );
   }
+
+  if (me.data.terminosVersion !== TERMINOS_VERSION) return <PantallaTerminos />;
 
   const enOnboarding = location.pathname === '/onboarding';
   if (!me.data.onboardingCompletado && !enOnboarding) return <Navigate to="/onboarding" replace />;

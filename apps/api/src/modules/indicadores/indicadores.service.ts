@@ -18,7 +18,9 @@ import type {
   ValorIndicador,
 } from '@efe/shared/schemas';
 import { Prisma, type Indicador } from '@prisma/client';
+import { AuditoriaService } from '../../common/auditoria/auditoria.service';
 import { fechaADb, fechaDeDb } from '../../common/fechas';
+import { reportarError } from '../../common/sentry';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   ProveedorHistoricoDolaresArgentinaDatos,
@@ -51,6 +53,7 @@ export class IndicadoresService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly http: ClienteHttp,
+    private readonly auditoria: AuditoriaService,
   ) {}
 
   /** Proveedores del job diario/horario: dólares de DolarApi e IPC (INDEC, con respaldo). */
@@ -291,21 +294,22 @@ export class IndicadoresService {
           obtenidoEn: new Date(),
         },
       });
-      await tx.auditoria.create({
-        data: {
-          actorId,
+      await this.auditoria.registrar(
+        {
           accion: 'admin.corregir_indicador',
           entidad: 'Indicador',
           entidadId: guardado.id,
+          actorId,
           datos: {
             codigo: datos.codigo,
             fecha: datos.fecha,
             anterior: anterior ? { valor: dec(anterior.valor), fuente: anterior.fuente } : null,
             nuevo: datos.valor,
           },
-          ip: ip ?? null,
+          ip,
         },
-      });
+        tx,
+      );
       return guardado;
     });
     this.cache.clear();
@@ -332,8 +336,9 @@ export class IndicadoresService {
     return valor;
   }
 
-  /** Sin Sentry configurado todavía (paso 8.2): las fallas van al logger como error. */
+  /** Las fallas de fuentes van al logger y a Sentry (si está configurado). */
   private reportarFalla(error: unknown) {
+    reportarError(error);
     this.logger.error(
       `Fuente de indicadores con falla: ${error instanceof Error ? error.message : String(error)}`,
     );

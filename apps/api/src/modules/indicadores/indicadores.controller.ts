@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Put, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { LIMITE_ADMIN } from '../../common/auth/limites';
 import { esCodigoIndicador } from '@efe/shared/indicadores';
 import type { Historico, IndicadorAdmin, Indicadores } from '@efe/shared/schemas';
 import type { Request } from 'express';
@@ -43,6 +45,7 @@ export class IndicadoresController {
 @ApiTags('admin')
 @ApiBearerAuth()
 @Roles('ADMIN')
+@Throttle(LIMITE_ADMIN)
 @Controller('admin/indicadores')
 export class AdminIndicadoresController {
   constructor(private readonly indicadores: IndicadoresService) {}

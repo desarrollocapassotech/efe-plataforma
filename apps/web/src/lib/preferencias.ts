@@ -4,6 +4,9 @@
  */
 const PREFIJO = 'efe:';
 
+/** Versión de términos tildada en el registro (se registra en la API al entrar). */
+export const PREFERENCIA_TERMINOS = 'terminosAceptados';
+
 export function leerPreferencia(clave: string): string | null {
   try {
     return window.localStorage.getItem(PREFIJO + clave);

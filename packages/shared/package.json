@@ -108,6 +108,16 @@
         "types": "./dist/indicadores/index.d.cts",
         "default": "./dist/indicadores/index.cjs"
       }
+    },
+    "./privacidad": {
+      "import": {
+        "types": "./dist/privacidad/index.d.ts",
+        "default": "./dist/privacidad/index.js"
+      },
+      "require": {
+        "types": "./dist/privacidad/index.d.cts",
+        "default": "./dist/privacidad/index.cjs"
+      }
     }
   },
   "files": [
