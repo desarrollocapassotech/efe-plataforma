@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "efecapitaladmin"
+  },
+  "targets": {
+    "efecapitaladmin": {
+      "hosting": {
+        "web": [
+          "efe-web"
+        ],
+        "admin": [
+          "efe-admin"
+        ]
+      }
+    }
+  }
+}

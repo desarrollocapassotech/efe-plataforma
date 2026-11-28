@@ -1,0 +1,41 @@
+# Blueprint de Render para la API (paso 8.2). Render lo lee al conectar el repo
+# ("New → Blueprint"). Los secretos van con `sync: false`: se cargan a mano en el
+# dashboard (ver docs/DEPLOY.md). Nada de esto se aplica solo hasta conectarlo.
+services:
+  - type: web
+    name: efe-api
+    runtime: node
+    plan: starter # no se duerme (ARCHITECTURE §10)
+    # La región de Render más cercana a Neon São Paulo (aws-sa-east-1) es Virginia (us-east).
+    region: virginia
+    branch: main
+    autoDeploy: true
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm turbo build --filter=@efe/api
+    # Solo `migrate deploy`: nunca `migrate dev` ni `reset` contra producción.
+    preDeployCommand: pnpm --filter @efe/api exec prisma migrate deploy
+    startCommand: pnpm --filter @efe/api start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '22'
+      - key: LOG_LEVEL
+        value: info
+      # Neon, proyecto efe-plataforma, rama production.
+      - key: DATABASE_URL # pooled
+        sync: false
+      - key: DIRECT_URL # directa (migraciones)
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        value: efecapitaladmin
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: CORS_ORIGINS # dominios de la web y el admin, separados por coma
+        sync: false
+      - key: JOBS_SECRET # el mismo valor va en el secret API_JOBS_SECRET de GitHub
+        sync: false
+      - key: SENTRY_DSN
+        sync: false

@@ -1,0 +1,44 @@
+# Jobs programados de la API (ARCHITECTURE §8). Llama a POST /internal/jobs/:job con el
+# secreto. Horarios en UTC (Argentina = UTC−3). Solo corre si DEPLOY_HABILITADO = "true".
+name: Jobs programados
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # 03:00 ART: recurrencias
+    - cron: '0 7 * * *' # 04:00 ART: purgar-cuentas
+    - cron: '0 13,16,19,22 * * 1-5' # 10, 13, 16 y 19 h ART, días hábiles: indicadores
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Job a correr
+        required: true
+        type: choice
+        options: [recurrencias, purgar-cuentas, indicadores, indicadores-historico]
+
+permissions:
+  contents: read
+
+jobs:
+  correr:
+    if: vars.DEPLOY_HABILITADO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Elegir el job
+        id: job
+        run: |
+          case "${{ github.event.schedule }}" in
+            '0 6 * * *') echo "nombre=recurrencias" >> "$GITHUB_OUTPUT" ;;
+            '0 7 * * *') echo "nombre=purgar-cuentas" >> "$GITHUB_OUTPUT" ;;
+            '0 13,16,19,22 * * 1-5') echo "nombre=indicadores" >> "$GITHUB_OUTPUT" ;;
+            *) echo "nombre=${{ inputs.job }}" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: Llamar a la API
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          JOBS_SECRET: ${{ secrets.API_JOBS_SECRET }}
+        run: |
+          # -f: falla si la respuesta no es 2xx. --retry: Render puede tardar si recién despliega.
+          curl -fsS --retry 3 --retry-delay 20 --max-time 300 \
+            -X POST -H "X-Jobs-Secret: $JOBS_SECRET" \
+            "$API_URL/api/v1/internal/jobs/${{ steps.job.outputs.nombre }}"

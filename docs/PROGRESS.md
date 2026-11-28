@@ -56,10 +56,10 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 8 — Deploy a producción
 
-- [ ] 8.1 CI
-- [ ] 8.2 API en Render
-- [ ] 8.3 Web y admin en Firebase Hosting
-- [ ] 8.4 Smoke test de producción
+- [x] 8.1 CI
+- [ ] 8.2 API en Render (archivos listos; falta lo manual)
+- [ ] 8.3 Web y admin en Firebase Hosting (archivos listos; falta lo manual)
+- [ ] 8.4 Smoke test de producción (script listo; falta correrlo)
 
 ## Fase 9 — Migrar datos de `gastos`
 
@@ -403,6 +403,28 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - **Revisión de endpoints que no filtran por `usuarioId`** (punto 9): solo los que corresponde por diseño: `GET /health` y `GET /indicadores*` (públicos, datos de mercado), `POST /internal/jobs/:job` (secreto de jobs; procesan todos los usuarios) y `/admin/*` (rol ADMIN; los usuarios solo con contadores). Todos los demás filtran por el usuario del token (lo verifica el test genérico).
 - Pendiente: textos legales definitivos (EFE); el DSN de Sentry (paso 0.5/8.2); `jobs.yml` con `purgar-cuentas` diario (8.3). El bundle inicial de la web pasa los 500 kB sin comprimir (148 kB gzip) con todas las secciones: conviene cargar las rutas con `lazy()` en la Fase 8.
 
+### 8.1 CI
+
+- `.github/workflows/ci.yml` en PR y push a `main`, con dos jobs: **archivos prohibidos** (`scripts/verificar-archivos-prohibidos.sh`: falla si hay versionado un `.env` que no sea `.env.example`, un `*.keystore`/`*.jks` o una service account de Firebase) y **CI**: `pnpm install --frozen-lockfile` (con cache de pnpm, Node de `.nvmrc`), `format:check`, `turbo lint typecheck test build`, **migraciones al día** (`prisma migrate diff --from-migrations --to-schema-datamodel --exit-code` contra una base sombra del servicio) y **e2e de la API** contra un servicio `postgres:18` (el `.env.test` se arma en el runner con la URL del servicio: no hay secretos).
+- Primer run en GitHub (commit `36f1c6f`): **verde** en los dos jobs, incluidos los e2e y el chequeo de migraciones.
+
+### 8.2 API en Render (parte del repo)
+
+- `render.yaml` (Blueprint): web service `efe-api`, plan Starter, **región Virginia** (la más cercana a Neon São Paulo entre las de Render: Oregon, Ohio, Virginia, Frankfurt, Singapur; conviene confirmarlo en el dashboard al crear), build con Turbo, `prisma migrate deploy` como pre-deploy, health check, auto-deploy desde `main`, variables con `sync: false` para los secretos.
+- `docs/DEPLOY.md`: qué cargar a mano en Render (variables de Neon **producción**, Firebase, CORS, `JOBS_SECRET`, Sentry), primer deploy, seed de admins y carga inicial de indicadores. **No se tocó Render ni Neon.**
+
+### 8.3 Web y admin en Firebase Hosting (parte del repo)
+
+- `firebase.json` en la raíz, multi-sitio: targets `web` → `apps/web/dist` y `admin` → `apps/admin/dist`, rewrite SPA, cache de un año para `/assets/**` (con hash) y `no-cache` para `index.html`, `sw.js`, `registerSW.js` y el manifest. Headers: `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` y una **CSP en modo `Report-Only`** (permite Firebase Auth/Firestore/Storage, `*.onrender.com` para la API y Faktia, Sentry, Google Fonts). **Decisión**: Report-Only al principio para no romper nada en producción; cuando la consola no muestre avisos, pasarla a `Content-Security-Policy` (checklist en `docs/SMOKE.md`). Cuando haya dominio propio de la API, sumarlo a `connect-src`.
+- `.firebaserc`: proyecto `efecapitaladmin`, targets `web` → `efe-web`, `admin` → `efe-admin`. El `firebase.json`/`.firebaserc` viejos de `apps/admin` quedan sin uso (el deploy actual sale del repo viejo); borrarlos cuando se migre el deploy.
+- `deploy-web.yml` y `deploy-admin.yml`: en push a `main` con cambios en la app, `packages/**`, el lockfile o `firebase.json` (y a mano), build con las `VITE_*` de GitHub Secrets y `FirebaseExtended/action-hosting-deploy@v0` al canal `live`. `jobs.yml`: `recurrencias` 03:00 ART, `purgar-cuentas` 04:00 ART, `indicadores` 10/13/16/19 h ART en días hábiles (UTC en el cron), más ejecución manual eligiendo el job (incluye `indicadores-historico`); `curl -f` con reintentos.
+- **Seguro**: los tres workflows tienen `if: vars.DEPLOY_HABILITADO == 'true'`. Hasta que Elías cree esa variable en el repo, un push a `main` **no despliega nada ni llama a la API** (el admin de producción sigue saliendo del repo viejo). Secrets a cargar: `FIREBASE_SERVICE_ACCOUNT_HOSTING`, `VITE_API_URL`, `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_WEB_APP_ID`, `VITE_FAKTIA_API_URL`, `VITE_FAKTIA_APP_URL`, `VITE_SENTRY_DSN_WEB`, `VITE_SENTRY_DSN_ADMIN`, `API_URL`, `API_JOBS_SECRET`.
+- `apps/admin/.env.example` suma `VITE_SENTRY_DSN`.
+
+### 8.4 Smoke test (parte del repo)
+
+- `docs/SMOKE.md` (checklist manual de web, admin, CSP y jobs) y `scripts/smoke.ts` (Node 22, sin dependencias): health con base, login por REST de Firebase, `/me`, crear cuenta, gasto, tarjeta y compra en 3 cuotas (verifica las 3 cuotas), resumen de la tarjeta, resumen del mes, indicadores, y después borra todo lo creado. Sale con 1 si algo falla. Probado en seco (sin credenciales reporta las fallas). **No se corrió contra producción**: no hay producción desplegada ni credenciales en esta sesión (y no corresponde que estén).
+
 ---
 
 ## Para revisar en local (sesión remota del 26–27/11/2026)
@@ -418,6 +440,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - 5.2 Web: panel de indicadores (`/indicadores`, pública y privada) y widget en el inicio.
 - 6.1 Admin: usuarios de la plataforma, métricas, indicadores y auditoría (API + 4 secciones del admin).
 - 7.1 Seguridad y privacidad: auditoría, límites, exportar/eliminar/recuperar cuenta, purga, términos y Sentry.
+- 8.1 CI en GitHub Actions. 8.2, 8.3 y 8.4: todo lo que vive en el repo (`render.yaml`, `firebase.json`, `.firebaserc`, workflows de deploy y jobs desactivados por `DEPLOY_HABILITADO`, `docs/DEPLOY.md`, `docs/SMOKE.md`, `scripts/smoke.ts`); faltan los pasos manuales.
 
 Todo está en `main`, un commit (o dos en el 3.1) por paso.
 

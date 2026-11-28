@@ -934,9 +934,10 @@ VITE_SENTRY_DSN
 
 ### CI/CD (GitHub Actions)
 
-- `ci.yml` (PR y push a `main`): install, `turbo lint typecheck test build`, verificación de que no hay migraciones pendientes de generar (`prisma migrate diff`).
-- `deploy-web.yml` / `deploy-admin.yml` (push a `main` con cambios en la app o en `packages/`): build + `firebase deploy --only hosting:<sitio>`.
-- API: Render con auto-deploy desde `main`. Build: `pnpm install --frozen-lockfile && pnpm turbo build --filter=api`. Pre-deploy: `pnpm --filter api prisma migrate deploy`. Health check: `/api/v1/health`.
+- `ci.yml` (PR y push a `main`): archivos prohibidos (`.env`, keystores, service accounts), formato, `turbo lint typecheck test build`, migraciones al día (`prisma migrate diff --exit-code` contra una base sombra) y e2e contra un Postgres 18 del runner.
+- Los workflows de deploy y `jobs.yml` solo corren si la variable del repo `DEPLOY_HABILITADO` es `true` (seguro mientras el deploy sale del repo viejo). Pasos manuales en `docs/DEPLOY.md`.
+- `deploy-web.yml` / `deploy-admin.yml` (push a `main` con cambios en la app o en `packages/`): build con las `VITE_*` de GitHub Secrets + `FirebaseExtended/action-hosting-deploy` al target `web`/`admin` de `firebase.json` (raíz, multi-sitio, headers de seguridad; CSP primero en modo Report-Only).
+- API: Render (`render.yaml`, región Virginia) con auto-deploy desde `main`. Build: `corepack enable && pnpm install --frozen-lockfile && pnpm turbo build --filter=@efe/api`. Pre-deploy: `pnpm --filter @efe/api exec prisma migrate deploy`. Health check: `/api/v1/health`.
 - `jobs.yml`: los crons de la sección 8.
 
 ### Dominios (a definir)
