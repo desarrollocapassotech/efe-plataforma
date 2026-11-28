@@ -10,6 +10,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { DecimalInterceptor } from './common/money/decimal.interceptor';
 import { ConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
+import { AdminModule } from './modules/admin/admin.module';
 import { CategoriasModule } from './modules/categorias/categorias.module';
 import { CuentasModule } from './modules/cuentas/cuentas.module';
 import { HealthModule } from './modules/health/health.module';
@@ -63,6 +64,7 @@ import { PrismaModule } from './prisma/prisma.module';
     TarjetasModule,
     ObjetivosModule,
     IndicadoresModule,
+    AdminModule,
     JobsModule,
   ],
   providers: [

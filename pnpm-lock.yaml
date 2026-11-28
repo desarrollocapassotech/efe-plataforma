@@ -23,6 +23,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@efe/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@hookform/resolvers':
         specifier: ^3.9.0
         version: 3.10.0(react-hook-form@7.92.0(@types/react@18.3.32)(react@18.3.1))
@@ -188,13 +191,13 @@ importers:
         version: 18.3.7(@types/react@18.3.32)
       '@vitejs/plugin-react':
         specifier: ^6.3.0
-        version: 6.3.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))
+        version: 6.3.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))
       autoprefixer:
         specifier: ^10.7.0
         version: 10.7.0(postcss@8.5.33)
       eslint:
         specifier: ^10.15.0
-        version: 10.15.0(jiti@2.7.0)
+        version: 10.15.0(jiti@1.21.7)
       jsdom:
         specifier: ^31.0.1
         version: 31.0.1(@noble/hashes@1.8.0)
@@ -209,10 +212,10 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^8.4.0
-        version: 8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4)
+        version: 8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4)
       vitest:
         specifier: ^5.1.2
-        version: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))
+        version: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))
 
   apps/api:
     dependencies:
@@ -376,7 +379,7 @@ importers:
         version: link:../../packages/config
       '@testing-library/jest-dom':
         specifier: ^8.0.0
-        version: 8.0.0(@testing-library/dom@10.4.2)(vitest@5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4)))
+        version: 8.0.0(@testing-library/dom@10.4.2)(vitest@5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4)))
       '@testing-library/react':
         specifier: ^16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -394,13 +397,13 @@ importers:
         version: 18.3.7(@types/react@18.3.32)
       '@vitejs/plugin-react':
         specifier: ^6.3.0
-        version: 6.3.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))
+        version: 6.3.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))
       autoprefixer:
         specifier: ^10.7.0
         version: 10.7.0(postcss@8.5.33)
       eslint:
         specifier: ^10.15.0
-        version: 10.15.0(jiti@1.21.7)
+        version: 10.15.0(jiti@2.7.0)
       jsdom:
         specifier: ^31.0.1
         version: 31.0.1(@noble/hashes@1.8.0)
@@ -415,13 +418,13 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^8.4.0
-        version: 8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4)
+        version: 8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4)
       vite-plugin-pwa:
         specifier: ^2.0.0
-        version: 2.0.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1)
+        version: 2.0.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1)
       vitest:
         specifier: ^5.1.2
-        version: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))
+        version: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))
 
   packages/config:
     dependencies:
@@ -10773,7 +10776,7 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 27.5.1
 
-  '@testing-library/jest-dom@8.0.0(@testing-library/dom@10.4.2)(vitest@5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4)))':
+  '@testing-library/jest-dom@8.0.0(@testing-library/dom@10.4.2)(vitest@5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4)))':
     dependencies:
       '@adobe/css-tools': 4.5.0
       '@testing-library/dom': 10.4.2
@@ -10783,7 +10786,7 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
     optionalDependencies:
-      vitest: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))
+      vitest: 5.1.2(@opentelemetry/api@1.10.0)(@types/node@22.20.7)(jsdom@31.0.1(@noble/hashes@1.8.0))(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))
 
   '@testing-library/react@16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.32))(@types/react@18.3.32)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -15337,12 +15340,12 @@ snapshots:
       d3-time: 3.1.1
       d3-timer: 3.0.2
 
-  vite-plugin-pwa@2.0.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1):
+  vite-plugin-pwa@2.0.0(vite@8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4))(workbox-build@7.4.1(@types/babel__core@7.20.5))(workbox-window@7.4.1):
     dependencies:
       debug: 4.4.3
       pretty-bytes: 6.1.1
       tinyglobby: 0.2.17
-      vite: 8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.4)
+      vite: 8.4.0(@types/node@22.20.7)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.4)
       workbox-build: 7.4.1(@types/babel__core@7.20.5)
       workbox-window: 7.4.1
     transitivePeerDependencies:

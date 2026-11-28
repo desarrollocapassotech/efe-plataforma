@@ -22,6 +22,10 @@ import { Plans } from './pages/Plans';
 import { Services } from './pages/Services';
 import { Billing } from './pages/Billing';
 import Index from './pages/Index';
+import { PlatformUsers } from './pages/PlatformUsers';
+import { Metrics } from './pages/Metrics';
+import { Indicators } from './pages/Indicators';
+import { Audit } from './pages/Audit';
 import { useAuthStore } from '@/stores/authStore';
 import { useDataStore } from '@/stores/dataStore';
 import { useNotificationSetup } from '@/hooks/useNotificationSetup';
@@ -82,6 +86,10 @@ const App = () => {
               <Route path="plans" element={<Plans />} />
               <Route path="services" element={<Services />} />
               <Route path="invoices" element={<Invoices />} />
+              <Route path="platform-users" element={<PlatformUsers />} />
+              <Route path="metrics" element={<Metrics />} />
+              <Route path="indicators" element={<Indicators />} />
+              <Route path="audit" element={<Audit />} />
               <Route path="invoices/new" element={<InvoiceForm />} />
               <Route path="invoices/monthly" element={<Billing />} />
               <Route path="billing" element={<Navigate to="/invoices/monthly" replace />} />

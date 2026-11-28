@@ -11,6 +11,10 @@ import {
   Receipt,
   Building2,
   Package,
+  UserRound,
+  BarChart3,
+  LineChart,
+  ShieldCheck,
 } from 'lucide-react';
 import { SuscripcionIcon } from '@/components/icons/SuscripcionIcon';
 import { useDataStore } from '@/stores/dataStore';
@@ -27,6 +31,11 @@ const navigation = [
   { name: 'Planes', href: '/plans', icon: SuscripcionIcon },
   { name: 'Servicios', href: '/services', icon: Package },
   { name: 'Facturas', href: '/invoices', icon: Receipt },
+  // Plataforma (app web): contra la API, no Firestore.
+  { name: 'Usuarios plataforma', href: '/platform-users', icon: UserRound },
+  { name: 'Métricas', href: '/metrics', icon: BarChart3 },
+  { name: 'Indicadores', href: '/indicators', icon: LineChart },
+  { name: 'Auditoría', href: '/audit', icon: ShieldCheck },
   { name: 'Mensajes', href: '/messages', icon: MessageCircle, preview: true },
   { name: 'Informes', href: '/reports', icon: FileText, preview: true },
 ];

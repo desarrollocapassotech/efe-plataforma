@@ -818,7 +818,8 @@ Prefijo `/api/v1`. Todos privados salvo indicación.
 | GET | `/indicadores` | Público. Último valor de cada indicador + fecha + fuente + brecha calculada |
 | GET | `/indicadores/:codigo/historico` | Público. `?desde&hasta` |
 | POST | `/internal/jobs/:job` | Header `X-Jobs-Secret`. Jobs: `indicadores`, `indicadores-historico`, `recurrencias`, `purgar-cuentas` |
-| GET | `/admin/usuarios` | ADMIN. Filtros, paginado |
+| GET | `/admin/usuarios` | ADMIN. Filtros (`q`, plan, rol, `activoDias`, registro desde/hasta), orden por columna, paginado por página |
+| GET | `/admin/usuarios/:id` | ADMIN. Solo contadores (sin datos financieros) |
 | PATCH | `/admin/usuarios/:id/plan` | ADMIN. Cambio manual de plan (auditado) |
 | GET | `/admin/metricas` | ADMIN. Registros por día, activos 7/30 días, movimientos cargados, retención simple |
 | GET | `/admin/auditoria` | ADMIN |

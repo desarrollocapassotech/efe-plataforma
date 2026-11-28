@@ -48,7 +48,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 6 — Admin: módulos de la plataforma
 
-- [ ] 6.1 Usuarios, métricas, auditoría e indicadores en el admin
+- [x] 6.1 Usuarios, métricas, auditoría e indicadores en el admin
 
 ## Fase 7 — Seguridad, privacidad y cumplimiento
 
@@ -368,8 +368,26 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - Mini gráficos con un SVG propio (`Sparkline`, sin Recharts: es solo la forma de la serie y no hace falta cargar la librería). El punto final va en HTML para que no se deforme.
 - **Inicio**: widget "Dólar e inflación" con MEP, oficial, brecha y la última inflación, con la fecha y la fuente.
 - **Más**: acceso "Dólar e inflación".
-- `formatearPorcentaje` ("3,7 %") con tests. Test de la página sin sesión (datos, fecha y fuente, invitación). Total web: 51.
+- `formatearPorcentaje` ("3,7 %") con tests. Test de la página sin sesión (datos, fecha y fuente, invitación). Total web: 50.
 - Revisado en Chromium a 360 px con la API simulada. Falta verlo con los datos reales (después del primer job de indicadores) y en el celular.
+
+### 6.1 Usuarios, métricas, auditoría e indicadores en el admin
+
+- **API** (`modules/admin`, todo con `@Roles('ADMIN')`; schemas en `@efe/shared/schemas/admin.ts`):
+  - `GET /admin/usuarios`: búsqueda por email o nombre, plan, rol, activos en los últimos N días, registro desde/hasta, `incluirEliminados`; orden por registro, último acceso, email, nombre o plan (desempate por email); cada usuario con la **cantidad** de movimientos (`groupBy`).
+  - `GET /admin/usuarios/:id`: **solo contadores** (cuentas, movimientos, recurrentes, tarjetas, compras, objetivos), nunca montos.
+  - `PATCH /admin/usuarios/:id/plan` `{ plan, motivo? }`: auditado (`admin.cambiar_plan`, con plan anterior, nuevo, motivo e IP).
+  - `GET /admin/metricas`: usuarios, activos 7/30 días, con al menos un movimiento, % con onboarding completo, registros y movimientos cargados por día (30 días, en días de Argentina, con `GROUP BY` en SQL y ceros donde no hubo nada) y uso por módulo (con tarjetas, objetivos y recurrentes). **Decisión**: las métricas cuentan solo usuarios con rol `USUARIO` y sin baja (los admins y las cuentas eliminadas distorsionan los números).
+  - `GET /admin/auditoria`: filtro por acción, usuario (afectado o actor), fechas; paginado. Trae el email del usuario y del actor (la tabla no tiene relaciones, así sobrevive a usuarios borrados: aparecen como "(eliminado)").
+  - **Distinto a ARCHITECTURE §6**: el admin pagina **por página** (`pagina`, `limite`, `total`) y no por cursor, porque sus tablas ordenan por cualquier columna y muestran el total. La web sigue con cursor.
+- e2e `admin.e2e-spec.ts` (5 tests): 401/403 para no admins en todos los endpoints, búsqueda, filtros, orden y paginación, detalle solo con contadores, cambio de plan auditado (y el usuario ve el plan nuevo en `/me`), métricas. Suite completa: 88 verdes.
+- **Admin** (`apps/admin`), cuatro secciones nuevas en el menú, después de Facturas: **Usuarios plataforma** (`/platform-users`), **Métricas** (`/metrics`), **Indicadores** (`/indicators`) y **Auditoría** (`/audit`). Siguen el patrón de listados de `apps/admin/CLAUDE.md`: `PageHeader`, filtros en una tarjeta con Buscar (borrador vs aplicados), badges removibles, tabla con `SortableHead` (en Usuarios y Auditoría el orden lo resuelve la API), badges de ancho fijo, acciones con íconos (ojo → `Sheet` lateral, después las específicas), tarjetas en móvil con select de orden, y estados de carga/error/vacío dentro de la tarjeta.
+  - Usuarios plataforma: tabla con registro, email, nombre, plan, último acceso y movimientos; marcas "Admin" y "Baja" en la línea del email. Panel con los contadores y la aclaración de privacidad. "Cambiar plan" (ícono de suscripción, el mismo de Planes) abre un `AlertDialog` con plan y motivo. El email se muestra porque es el identificador del usuario de la app (la regla de no mostrar contacto es para los clientes de asesoramiento).
+  - Métricas: cifras en una grilla con bordes finos (`gap-px bg-border`) y dos gráficos de barras de una serie (30 días) con tooltip y "Ver los números". Usa Recharts (ya era dependencia del admin) y el token validado `--chart-ingresos`.
+  - Indicadores: valores guardados con filtros por indicador y fechas, origen "Automático"/"Manual", panel con la fuente y la URL, "Corregir valor" y "Cargar valor" (`PUT /admin/indicadores`, con la aclaración de que queda auditado y la ingesta no lo pisa).
+  - Auditoría: fecha, acción (badge), hecho por, usuario afectado y entidad; panel con IP y los datos en JSON.
+  - Cliente HTTP nuevo `src/lib/api-efe.ts` (como `faktia.ts`: ID token de Firebase, reintento con token refrescado si responde 401, mensaje claro si el usuario no es ADMIN en la API). Config: **`VITE_API_URL`** (agregada a `apps/admin/.env.example`; hay que sumarla al `.env` local del admin). `@efe/shared` pasa a ser dependencia del admin (`workspace:*`) para reusar tipos y códigos sin duplicarlos.
+- Revisado en Chromium con la API simulada (desktop y móvil): listado y panel de usuarios, métricas, indicadores en móvil. Falta probarlo contra la API real con el usuario admin del seed.
 
 ---
 
@@ -384,6 +402,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - 4.1 Objetivos (shared + API + web).
 - 5.1 Fuentes e ingesta de indicadores (después de que Elías confirmara las fuentes).
 - 5.2 Web: panel de indicadores (`/indicadores`, pública y privada) y widget en el inicio.
+- 6.1 Admin: usuarios de la plataforma, métricas, indicadores y auditoría (API + 4 secciones del admin).
 
 Todo está en `main`, un commit (o dos en el 3.1) por paso.
 
@@ -416,4 +435,5 @@ No había navegador contra la API real. Lo visual se revisó en Chromium a 360 p
 4. **Inicio**: tarjeta del mes con el medidor, categorías (tocar una lleva a Movimientos filtrado), comparación, gráfico de 12 meses (tooltip y tocar un mes), Pesos/Dólares si hay datos en las dos monedas.
 5. **Tarjetas**: alta con día de cierre y de vencimiento. Compra en cuotas desde "+" → "Fue con tarjeta de crédito": revisar la vista previa del resumen y el modo "Puse cada cuota". Detalle del resumen: navegar períodos, corregir fechas (las cuotas se mueven) y volver a las de siempre, registrar un pago (el saldo de la cuenta baja; el gasto del mes no cambia), eliminar el pago. Abrir Comprometido.
 6. **Objetivos**: plantilla "Fondo de emergencia" (sugerencia de 3 y 6 meses si hay meses de gastos cargados), aportar y retirar, marcar cumplido al 100 %, archivar. Bloque de objetivos en el Inicio.
-7. **Indicadores**: con la API local corriendo, `POST /internal/jobs/indicadores` y después `indicadores-historico` (con `X-Jobs-Secret`). Todos los proveedores tienen que responder `ok: true`. Revisar `GET /api/v1/indicadores` (brechas e IPC acumulado razonables).
+7. **Admin (6.1)**: agregar `VITE_API_URL=http://localhost:3000/api/v1` al `.env` del admin, levantar API y admin, entrar con tu usuario (tiene que ser ADMIN en la base: seed) y revisar Usuarios plataforma (cambiar el plan de un usuario de prueba y verlo en Auditoría), Métricas e Indicadores (corregir un valor).
+8. **Indicadores**: con la API local corriendo, `POST /internal/jobs/indicadores` y después `indicadores-historico` (con `X-Jobs-Secret`). Todos los proveedores tienen que responder `ok: true`. Revisar `GET /api/v1/indicadores` (brechas e IPC acumulado razonables).
