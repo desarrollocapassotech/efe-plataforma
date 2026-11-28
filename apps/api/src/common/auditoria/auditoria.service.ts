@@ -10,7 +10,8 @@ export type AccionAuditada =
   | 'usuario.exportar'
   | 'usuario.aceptar_terminos'
   | 'admin.cambiar_plan'
-  | 'admin.corregir_indicador';
+  | 'admin.corregir_indicador'
+  | 'admin.vincular_cliente';
 
 export interface RegistroAuditoria {
   accion: AccionAuditada;

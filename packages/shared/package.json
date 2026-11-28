@@ -118,6 +118,16 @@
         "types": "./dist/privacidad/index.d.cts",
         "default": "./dist/privacidad/index.cjs"
       }
+    },
+    "./asesoramiento": {
+      "import": {
+        "types": "./dist/asesoramiento/index.d.ts",
+        "default": "./dist/asesoramiento/index.js"
+      },
+      "require": {
+        "types": "./dist/asesoramiento/index.d.cts",
+        "default": "./dist/asesoramiento/index.cjs"
+      }
     }
   },
   "files": [

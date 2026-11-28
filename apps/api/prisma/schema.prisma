@@ -90,18 +90,20 @@ model Usuario {
   terminosVersion      String?
   terminosAceptadosEn  DateTime?
 
-  cuentas        Cuenta[]
-  categorias     Categoria[]
-  movimientos    Movimiento[]
-  transferencias Transferencia[]
-  recurrencias   Recurrencia[]
-  tarjetas       Tarjeta[]
-  compras        CompraTarjeta[]
-  cuotas         Cuota[]
-  pagosResumen   PagoResumen[]
-  objetivos      Objetivo[]
-  perfiles       PerfilInversor[]
-  suscripciones  Suscripcion[]
+  cuentas              Cuenta[]
+  categorias           Categoria[]
+  movimientos          Movimiento[]
+  transferencias       Transferencia[]
+  recurrencias         Recurrencia[]
+  tarjetas             Tarjeta[]
+  compras              CompraTarjeta[]
+  cuotas               Cuota[]
+  pagosResumen         PagoResumen[]
+  objetivos            Objetivo[]
+  perfiles             PerfilInversor[]
+  suscripciones        Suscripcion[]
+  /// Si además es cliente de asesoramiento de EFE (Fase 11).
+  clienteAsesoramiento ClienteAsesoramiento?
 
   @@index([email])
   @@map("usuarios")
@@ -426,4 +428,110 @@ model Auditoria {
   @@index([usuarioId, creadoEn])
   @@index([accion, creadoEn])
   @@map("auditoria")
+}
+
+// ─── Asesoramiento (Fase 11, ARCHITECTURE §5.3) ─────────────────────────────────────
+// Lo que hoy está en Firestore en el admin (clients, brokers, planes, servicios).
+
+enum PerfilRiesgo {
+  CONSERVADOR
+  MODERADO
+  AGRESIVO
+}
+
+model ClienteAsesoramiento {
+  id                    String        @id @default(cuid())
+  /// Lo que Faktia usa como referenciaExterna: el id del doc de Firestore en los migrados.
+  faktiaReferencia      String        @unique
+  usuarioId             String?       @unique
+  nombre                String
+  apellido              String
+  email                 String?
+  telefono              String?
+  perfilInversor        PerfilRiesgo?
+  objetivos             String?
+  horizonteInversion    String?
+  fiscal                Json?
+  notas                 Json?
+  ultimoContacto        DateTime?
+  deshabilitadoEn       DateTime?
+  motivoDeshabilitacion String?
+  creadoEn              DateTime      @default(now())
+  actualizadoEn         DateTime      @updatedAt
+
+  usuario     Usuario?                  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  brokers     ClienteBroker[]
+  suscripcion SuscripcionAsesoramiento?
+
+  @@map("clientes_asesoramiento")
+}
+
+model Broker {
+  id               String  @id @default(cuid())
+  /// "broker:<id Firestore>" en los migrados.
+  faktiaReferencia String  @unique
+  nombre           String  @unique
+  email            String?
+  telefono         String?
+  notas            String?
+  fiscal           Json?
+
+  clientes ClienteBroker[]
+
+  @@map("brokers")
+}
+
+model ClienteBroker {
+  clienteId String
+  brokerId  String
+
+  cliente ClienteAsesoramiento @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  broker  Broker               @relation(fields: [brokerId], references: [id], onDelete: Restrict)
+
+  @@id([clienteId, brokerId])
+  @@map("clientes_brokers")
+}
+
+model PlanAsesoramiento {
+  id     String  @id @default(cuid())
+  nombre String
+  precio Decimal @db.Decimal(18, 2)
+
+  suscripciones SuscripcionAsesoramiento[]
+
+  @@map("planes_asesoramiento")
+}
+
+model ServicioAsesoramiento {
+  id     String  @id @default(cuid())
+  nombre String
+  precio Decimal @db.Decimal(18, 2)
+
+  @@map("servicios_asesoramiento")
+}
+
+model SuscripcionAsesoramiento {
+  id        String  @id @default(cuid())
+  clienteId String  @unique
+  planId    String?
+  desde     String // YYYY-MM, mes de alta (se cobra completo)
+  hasta     String? // YYYY-MM, último mes facturado
+
+  cliente   ClienteAsesoramiento @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  plan      PlanAsesoramiento?   @relation(fields: [planId], references: [id], onDelete: SetNull)
+  historial MontoSuscripcion[]
+
+  @@map("suscripciones_asesoramiento")
+}
+
+model MontoSuscripcion {
+  id            String  @id @default(cuid())
+  suscripcionId String
+  monto         Decimal @db.Decimal(18, 2)
+  desde         String // YYYY-MM
+
+  suscripcion SuscripcionAsesoramiento @relation(fields: [suscripcionId], references: [id], onDelete: Cascade)
+
+  @@unique([suscripcionId, desde])
+  @@map("montos_suscripcion")
 }

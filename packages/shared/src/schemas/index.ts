@@ -1,4 +1,5 @@
 export * from './admin';
+export * from './asesoramiento';
 export * from './base';
 export * from './categorias';
 export * from './cuentas';

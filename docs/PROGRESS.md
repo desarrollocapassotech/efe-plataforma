@@ -72,7 +72,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 ## Fase 11 — Migrar el admin de Firestore a la API
 
-- [ ] 11.1 Modelos y API de asesoramiento
+- [x] 11.1 Modelos y API de asesoramiento
 - [ ] 11.2 Script de migración Firestore → Postgres
 - [ ] 11.3 Admin contra la API
 
@@ -425,6 +425,20 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 
 - `docs/SMOKE.md` (checklist manual de web, admin, CSP y jobs) y `scripts/smoke.ts` (Node 22, sin dependencias): health con base, login por REST de Firebase, `/me`, crear cuenta, gasto, tarjeta y compra en 3 cuotas (verifica las 3 cuotas), resumen de la tarjeta, resumen del mes, indicadores, y después borra todo lo creado. Sale con 1 si algo falla. Probado en seco (sin credenciales reporta las fallas). **No se corrió contra producción**: no hay producción desplegada ni credenciales en esta sesión (y no corresponde que estén).
 
+### Fases 9 y 10: bloqueadas (no se hicieron)
+
+- **9.1 Migración de `gastos`**: necesita leer el código de `../../gastos` (no está en esta sesión remota) y una service account del proyecto Firebase `mis-gastos-mes`. Se hace en local con `--add-dir ../../gastos`.
+- **10.1 Perfil de inversor**: el plan dice frenar si no existe `docs/perfil-inversor-v1.md` con el cuestionario de Flor (preguntas, opciones, puntajes por eje y perfiles). No existe. La 10.2 además necesita la decisión #8 (proveedor de IA).
+
+### 11.1 Modelos y API de asesoramiento
+
+- **Schema**: los modelos de ARCHITECTURE §5.3 tal cual (`ClienteAsesoramiento`, `Broker`, `ClienteBroker`, `PlanAsesoramiento`, `ServicioAsesoramiento`, `SuscripcionAsesoramiento`, `MontoSuscripcion`, enum `PerfilRiesgo`), más la **relación** `ClienteAsesoramiento.usuario → Usuario` (§5.3 tenía el `usuarioId` sin relación; con `onDelete: SetNull`, si se purga el usuario el cliente queda). Migración **`20261128150000_asesoramiento`** (7 tablas), generada con `prisma migrate diff` y verificada sin diferencias pendientes; **sin aplicar en develop**.
+- **`@efe/shared/asesoramiento`** (subpath nuevo, 11 tests): las reglas de `apps/admin/src/lib/{suscripciones,clientes,brokers}.ts` (mes vencido, monto vigente por historial, `conNuevoMonto`, facturable, activa, atrasado, baja hoy, asignar plan, baja lógica, normalización de brokers con alias y acentos) **con montos como string decimal** (el admin hoy usa `number`) y el mes en curso como parámetro (el admin usaba `new Date()` local). Se agregó `errorSuscripcion` para validar una suscripción completa. El admin sigue con su propia copia hasta el 11.3 (lee Firestore con números); ahí pasa a usar esta.
+- **API** `modules/asesoramiento` (`@Roles('ADMIN')`, 60/min), bajo `/admin/asesoramiento`: clientes (listar con filtros por texto, estado, broker, plan y perfil; ver; crear; editar con brokers; deshabilitar con baja de la suscripción al mes vencido; habilitar sin reactivarla; `PUT :id/suscripcion` completa; `PUT :id/usuario` para vincular con un usuario de la plataforma, que le pone plan ASESORAMIENTO y queda en auditoría como `admin.vincular_cliente`), brokers (nombre único sin mayúsculas, renombrar sin batch, no se borra con clientes), planes (CRUD, asignar a varios clientes con reporte de omitidos, nuevo precio aplicado solo a los tildados) y servicios. Cada cliente trae su suscripción con `montoActual`, `activa` y `atrasado` calculados en shared.
+- **Decisiones**: los clientes y brokers **nuevos** (creados desde la API) tienen `faktiaReferencia` = UUID / `broker:<uuid>` (los migrados del 11.2 conservan el id de Firestore, que es lo que Faktia ya conoce). Listados sin paginación (decenas de clientes). Borrar un plan deja a sus clientes con monto propio (`planId` → null).
+- e2e `asesoramiento.e2e-spec.ts` (9 tests): solo ADMIN, brokers, clientes con filtros, broker con clientes, asignar plan y precio a los tildados (el otro queda atrasado), suscripción inválida, deshabilitar/habilitar, vincular usuario (plan ASESORAMIENTO, auditoría, usuario ya vinculado) y servicios. Suite completa: 106 e2e verdes.
+- **Pendiente**: 11.2 (script Firestore → Postgres: necesita la service account de `efecapitaladmin` y probar contra datos reales; **crítico conservar `faktiaReferencia`**) y 11.3 (admin contra la API, con prueba de facturación contra Faktia de homologación). No se hicieron en esta sesión.
+
 ---
 
 ## Para revisar en local (sesión remota del 26–27/11/2026)
@@ -440,6 +454,7 @@ Bitácora de los pasos de `docs/PLAN.md`. Al terminar un paso: marcarlo, y anota
 - 5.2 Web: panel de indicadores (`/indicadores`, pública y privada) y widget en el inicio.
 - 6.1 Admin: usuarios de la plataforma, métricas, indicadores y auditoría (API + 4 secciones del admin).
 - 7.1 Seguridad y privacidad: auditoría, límites, exportar/eliminar/recuperar cuenta, purga, términos y Sentry.
+- 11.1 Modelos y API de asesoramiento (Fases 9 y 10 bloqueadas por falta de acceso y de definiciones).
 - 8.1 CI en GitHub Actions. 8.2, 8.3 y 8.4: todo lo que vive en el repo (`render.yaml`, `firebase.json`, `.firebaserc`, workflows de deploy y jobs desactivados por `DEPLOY_HABILITADO`, `docs/DEPLOY.md`, `docs/SMOKE.md`, `scripts/smoke.ts`); faltan los pasos manuales.
 
 Todo está en `main`, un commit (o dos en el 3.1) por paso.
@@ -463,6 +478,7 @@ Todo está en `main`, un commit (o dos en el 3.1) por paso.
 - Unit: shared 144, web 48, API sin cambios.
 
 ### Migraciones
+- **`20261128150000_asesoramiento` (11.1), sin aplicar en `develop`**: las 7 tablas del asesoramiento. Mismo procedimiento que la de abajo.
 - **`20261128120000_terminos_usuario` (7.1), sin aplicar en `develop`**: agrega `terminosVersion` y `terminosAceptadosEn` a `usuarios`. Aplicarla con `pnpm --filter @efe/api exec prisma migrate deploy` (con el `.env` de develop) o `prisma migrate dev`. En `test` la aplican solos los e2e. Las demás tablas usadas en esta sesión ya estaban en el schema.
 
 ### Qué probar a mano (navegador y celular)

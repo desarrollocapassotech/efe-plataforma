@@ -1,3 +1,4 @@
+export * from './asesoramiento';
 export * from './categorias';
 export * from './dinero';
 export * from './fechas';

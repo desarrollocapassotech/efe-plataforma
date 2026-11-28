@@ -657,7 +657,7 @@ model Auditoria {
 }
 ```
 
-### 5.3 Schema Prisma — Asesoramiento (Fase 11, NO migrar antes)
+### 5.3 Schema Prisma — Asesoramiento (Fase 11, migrado en el paso 11.1)
 
 Refleja lo que hoy está en Firestore en el admin (`clients`, `brokers`, `planes`, `servicios`).
 
@@ -670,8 +670,8 @@ enum PerfilRiesgo {
 
 model ClienteAsesoramiento {
   id                    String        @id @default(cuid())
-  faktiaReferencia      String        @unique // id del doc de Firestore: Faktia asocia por referenciaExterna
-  usuarioId             String?       @unique // si además es usuario de la plataforma
+  faktiaReferencia      String        @unique // id del doc de Firestore (migrados) o UUID (nuevos): Faktia asocia por referenciaExterna
+  usuarioId             String?       @unique // si además es usuario de la plataforma (relación con Usuario, onDelete SetNull)
   nombre                String
   apellido              String
   email                 String?
@@ -827,6 +827,8 @@ Prefijo `/api/v1`. Todos privados salvo indicación.
 | PATCH | `/admin/usuarios/:id/plan` | ADMIN. Cambio manual de plan (auditado) |
 | GET | `/admin/metricas` | ADMIN. Registros por día, activos 7/30 días, movimientos cargados, retención simple |
 | GET | `/admin/auditoria` | ADMIN |
+| * | `/admin/asesoramiento/clientes` | ADMIN. Listar (filtros), ver, crear, editar, `POST :id/deshabilitar` / `:id/habilitar` (baja lógica, nunca DELETE), `PUT :id/suscripcion`, `PUT :id/usuario` (vincula con un usuario de la plataforma y le pone plan ASESORAMIENTO, auditado) |
+| * | `/admin/asesoramiento/{brokers,planes,servicios}` | ADMIN. CRUD; broker con clientes → 409; `POST planes/:id/asignar` y `POST planes/:id/precio` (a los clientes tildados) |
 | GET/PUT | `/admin/indicadores` | ADMIN. Ver y corregir manualmente un valor |
 
 Paginación por cursor: `{ items, nextCursor }`. Swagger en `/api/docs` (solo fuera de producción o con auth básica).
