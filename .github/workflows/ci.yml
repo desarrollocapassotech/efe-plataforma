@@ -1,0 +1,71 @@
+# CI (paso 8.1): en cada PR y push a main.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  archivos-prohibidos:
+    name: Sin secretos versionados
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/verificar-archivos-prohibidos.sh
+
+  ci:
+    name: Lint, tipos, tests, build y e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      # Base de los e2e y base "sombra" para el chequeo de migraciones (no son secretos).
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: efe
+          POSTGRES_PASSWORD: efe
+          POSTGRES_DB: efe_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U efe" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TURBO_TELEMETRY_DISABLED: '1'
+      DB_TEST: postgresql://efe:efe@localhost:5432/efe_test
+      DB_SOMBRA: postgresql://efe:efe@localhost:5432/efe_sombra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # usa la versión de `packageManager`
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Formato
+        run: pnpm format:check
+
+      - name: Lint, typecheck, tests y build
+        run: pnpm turbo lint typecheck test build
+
+      - name: Migraciones al día con el schema
+        run: |
+          PGPASSWORD=efe psql -h localhost -U efe -d efe_test -c 'CREATE DATABASE efe_sombra;'
+          # --exit-code: 2 si el schema tiene cambios sin migración generada.
+          pnpm --filter @efe/api exec prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "$DB_SOMBRA" \
+            --exit-code
+
+      - name: e2e de la API
+        run: |
+          printf 'DATABASE_URL=%s\nDIRECT_URL=%s\n' "$DB_TEST" "$DB_TEST" > apps/api/.env.test
+          pnpm --filter @efe/api test:e2e
